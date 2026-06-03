@@ -1,0 +1,32 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+      - run: python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.0.json
+      - run: python -m ifrs18_oras demo --output-dir outputs/demo
+      - run: test -f outputs/demo/company_scores.csv && test -f outputs/demo/evidence_log.csv && test -f outputs/demo/html_reports/Fictional_Aero_Demo.html
+      - run: test ! -f src/fitz.py && test ! -f src/pymupdf.py
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pymupdf
+          repo_src = Path.cwd() / "src"
+          module_path = Path(pymupdf.__file__).resolve()
+          print(module_path)
+          if module_path.is_relative_to(repo_src.resolve()):
+              raise SystemExit("pymupdf is imported from repository src")
+          PY
