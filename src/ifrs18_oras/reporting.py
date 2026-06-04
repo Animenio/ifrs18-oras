@@ -14,7 +14,7 @@ from ifrs18_oras.models import Codebook, RunResult
 
 
 def package_versions() -> dict[str, str]:
-    packages = ["PyMuPDF"]
+    packages = ["PyMuPDF", "lxml"]
     versions: dict[str, str] = {}
     for package in packages:
         try:
@@ -113,7 +113,14 @@ def write_outputs(
         "input_directory_path": str(input_dir),
         "output_directory_path": str(output_dir),
         "processed_companies": [row.company for row in result.company_scores],
-        "source_pdf_hashes": sorted({row.sha256 for row in result.manifests}),
+        "source_pdf_hashes": sorted(
+            {
+                row.sha256
+                for row in result.manifests
+                if row.document_filename.lower().endswith(".pdf")
+            }
+        ),
+        "source_document_hashes": sorted({row.sha256 for row in result.manifests}),
         "methodological_disclaimer": DISCLAIMER,
         "exact_command": command,
     }

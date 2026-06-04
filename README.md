@@ -1,6 +1,6 @@
 # IFRS18-ORAS
 
-IFRS18-ORAS is a deterministic Python research pipeline for calculating the **IFRS 18 Observable Reporting Alignment Score** from text-native public PDF reporting packages. It measures **observable documentary alignment** with selected presentation and disclosure features introduced by IFRS 18 for systematic academic screening and later validation on a manually reviewed subsample.
+IFRS18-ORAS is a deterministic Python research pipeline for calculating the **IFRS 18 Observable Reporting Alignment Score** from text-native public reporting packages, including PDFs and official ESEF XHTML/Inline XBRL annual financial reports. It measures **observable documentary alignment** with selected presentation and disclosure features introduced by IFRS 18 for systematic academic screening and later validation on a manually reviewed subsample.
 
 ## Academic boundary
 
@@ -16,7 +16,7 @@ tests/                  unit and integration tests
 .github/workflows/      CI
 ```
 
-Do not commit real annual reports, IFRS standard PDFs, proprietary data, or PDFs unless redistribution is permitted. `data/raw/` is ignored.
+Do not commit real annual reports, IFRS standard PDFs, ESEF XHTML/Inline XBRL filings, proprietary data, or source documents unless redistribution is permitted. `data/raw/` is ignored.
 
 ## Installation
 
@@ -36,21 +36,21 @@ python -m ifrs18_oras score --input-dir data/raw --output-dir outputs/run_001 --
 python -m ifrs18_oras validate-subsample --automatic-item-scores outputs/run_001/item_scores.csv --manual-coding validation/manual_item_scores.csv --output-dir outputs/validation_run_001
 ```
 
-## Adding company PDFs
+## Adding company source documents
 
-Use one folder per company:
+Use one folder per company. Supported source extensions are `.pdf`, `.xhtml`, `.html`, and `.htm`:
 
 ```text
 data/raw/Airbus/annual_report_2025.pdf
-data/raw/Airbus/results_release_2025.pdf
-data/raw/Leonardo/annual_report_2025.pdf
+data/raw/Airbus/esef_annual_report_2025.xhtml
+data/raw/Leonardo/annual_report_2025.html
 ```
 
-Each folder is scored independently. The scoring command performs no web requests and no default OCR.
+Each folder is scored independently. XHTML/HTML/Inline XBRL files are parsed natively with `lxml`; they are not converted to PDF. The extractor removes non-visible script/style/head content and Inline XBRL hidden sections before deterministic regex scoring. The scoring command performs no web requests and no default OCR.
 
 ## Outputs
 
-Each run writes `company_scores.csv`, `company_scores.json`, `dimension_scores.csv`, `item_scores.csv`, `evidence_log.csv`, `extraction_manifest.csv`, `run_manifest.json`, and `html_reports/<company>.html`. Inspect the HTML audit trail to see page-numbered snippets, matched regex patterns, item scores, document hashes, and the codebook hash.
+Each run writes `company_scores.csv`, `company_scores.json`, `dimension_scores.csv`, `item_scores.csv`, `evidence_log.csv`, `extraction_manifest.csv`, `run_manifest.json`, and `html_reports/<company>.html`. Inspect the HTML audit trail to see source-location snippets, matched regex patterns, item scores, document hashes, and the codebook hash.
 
 ## Scoring formula
 
@@ -58,11 +58,11 @@ Each run writes `company_scores.csv`, `company_scores.json`, `dimension_scores.c
 
 ## Reproducibility protocol
 
-Record the data cut-off, archive input PDF hashes, run from a clean clone, preserve `run_manifest.json`, and avoid comparing scores from different codebook versions without a comparability warning. The codebook is JSON because it is human-readable, versionable, and dependency-light.
+Record the data cut-off, archive input document hashes, run from a clean clone, preserve `run_manifest.json`, and avoid comparing scores from different codebook versions without a comparability warning. The codebook is JSON because it is human-readable, versionable, and dependency-light.
 
 ## Limitations
 
-Regex evidence can produce false positives and false negatives; PDF text extraction may fail on scanned or image-only files; no IFRS materiality is inferred; MPM detections are only candidates; US GAAP convergence screening should be a future separate construct rather than IFRS readiness.
+Regex evidence can produce false positives and false negatives; PDF text extraction may fail on scanned or image-only files; XHTML/HTML extraction depends on readable source markup; no IFRS materiality is inferred; MPM detections are only candidates; US GAAP convergence screening should be a future separate construct rather than IFRS readiness.
 
 ## Tests
 
@@ -75,5 +75,5 @@ make verify
 
 Use `CITATION.cff` as a placeholder and replace author fields before publication.
 
-A technically unreadable PDF is not evidence of low IFRS 18 alignment. IFRS18-ORAS reports the company as unscorable when no usable text-native document is available. A zero score means readable documents were analysed and no matching evidence was found; `N/A` means the source package was technically insufficient for automatic scoring. OCR is not applied silently, and replacement text-native PDFs, XHTML or XBRL sources should be obtained.
+A technically unreadable source document is not evidence of low IFRS 18 alignment. IFRS18-ORAS reports the company as unscorable when no usable text-native document is available. A zero score means readable documents were analysed and no matching evidence was found; `N/A` means the source package was technically insufficient for automatic scoring. OCR is not applied silently, and replacement text-native PDF, XHTML, HTML, or Inline XBRL sources should be obtained.
  The low-text warning threshold is a technical extraction-screening parameter, not an IFRS threshold or materiality threshold.

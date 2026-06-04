@@ -4,7 +4,7 @@ from pathlib import Path
 
 from ifrs18_oras.config import load_codebook
 from ifrs18_oras.detection import any_pattern, find_pattern_evidence
-from ifrs18_oras.extraction import extract_pdf
+from ifrs18_oras.extraction import SUPPORTED_DOCUMENT_EXTENSIONS, extract_document
 from ifrs18_oras.models import (
     Codebook,
     CompanyScore,
@@ -37,13 +37,23 @@ def score_input(input_dir: Path, codebook_path: Path) -> tuple[RunResult, Codebo
     codebook, codebook_hash = load_codebook(codebook_path)
     result = RunResult()
     for company_dir in company_dirs:
-        pdfs = sorted(company_dir.glob("*.pdf"), key=lambda p: p.name.lower())
-        if not pdfs:
-            raise ValueError(f"Company folder contains no PDF files: {company_dir}")
+        documents = sorted(
+            [
+                path
+                for path in company_dir.iterdir()
+                if path.is_file() and path.suffix.lower() in SUPPORTED_DOCUMENT_EXTENSIONS
+            ],
+            key=lambda p: p.name.lower(),
+        )
+        if not documents:
+            supported = ", ".join(SUPPORTED_DOCUMENT_EXTENSIONS)
+            raise ValueError(
+                f"Company folder contains no supported document files ({supported}): {company_dir}"
+            )
         pages: list[PageText] = []
         manifests: list[DocumentManifest] = []
-        for pdf in pdfs:
-            doc_pages, manifest = extract_pdf(company_dir.name, pdf)
+        for document in documents:
+            doc_pages, manifest = extract_document(company_dir.name, document)
             if manifest.scoring_eligible:
                 pages.extend(doc_pages)
             manifests.append(manifest)
@@ -100,7 +110,7 @@ def unscorable_company(
                     weighted_score=None,
                     evidence_count=0,
                     strongest_evidence_type="N/A",
-                    explanatory_note="Company unscorable: no scoring-eligible text-native PDF document.",
+                    explanatory_note="Company unscorable: no scoring-eligible text-native PDF/XHTML document.",
                 )
             )
     result.company_scores.append(

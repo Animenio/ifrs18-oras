@@ -7,7 +7,7 @@ import pytest
 
 from ifrs18_oras.config import load_codebook
 from ifrs18_oras.detection import find_pattern_evidence
-from ifrs18_oras.extraction import extract_pdf, normalize_text
+from ifrs18_oras.extraction import extract_pdf, extract_xhtml, normalize_text
 from ifrs18_oras.hashing import sha256_file, sha256_text
 from ifrs18_oras.models import PageText
 from ifrs18_oras.scoring import is_applicable, score_company
@@ -183,3 +183,21 @@ def test_deterministic_scoring_repeated() -> None:
     one = score_company("C", pages, [], codebook).company_scores[0].ifrs18_oras_0_100
     two = score_company("C", pages, [], codebook).company_scores[0].ifrs18_oras_0_100
     assert one == two
+
+
+def test_xhtml_extraction_normalises_visible_text_and_uses_single_document_page(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "report.htm"
+    path.write_text(
+        "<html><body><p>Operating&nbsp;profit</p><script>Hidden adjusted EBIT</script><table><tr><td>IFRS 18</td></tr></table></body></html>",
+        encoding="utf-8",
+    )
+    pages, manifest = extract_xhtml("HtmlCo", path)
+    assert manifest.scoring_eligible
+    assert manifest.page_count == 1
+    assert len(pages) == 1
+    assert pages[0].page_number == 1
+    assert "Operating profit" in pages[0].text
+    assert "IFRS 18" in pages[0].text
+    assert "Hidden adjusted EBIT" not in pages[0].text
