@@ -12,10 +12,10 @@
 - `supplementary_D_ias7`: supplementary D score.
 - `mpm_candidate_detected`: deterministic trigger flag.
 - `function_expenses_detected`: deterministic trigger flag.
-- `documents_scored`: count of scoring-eligible PDF documents used in scoring.
+- `documents_scored`: count of scoring-eligible source documents used in scoring.
 - `company_processing_status`: `ok`, `warning_low_text`, `warning_excluded_documents`, or `unscorable_no_usable_text`.
-- `usable_documents`: count of scoring-eligible PDFs.
-- `excluded_documents`: count of technically unusable PDFs excluded from scoring.
+- `usable_documents`: count of scoring-eligible source documents.
+- `excluded_documents`: count of technically unusable source documents excluded from scoring.
 
 ## dimension_scores.csv
 Company, dimension ID/label, main-score weight, applicable and total item counts, applicable item weight, and dimension score.
@@ -30,7 +30,7 @@ Company, document filename, document SHA-256, item ID, dimension, match type, re
 Company, document filename, SHA-256, page count, extracted character count, low-text warning flag, processing status, scoring-eligible flag, exclusion reason, and error message. `scoring_eligible=false` means the document was excluded from scoring because it was technically unusable (for example, no extractable text or extraction error).
 
 ## run_manifest.json
-UTC timestamp, software version, Python version, package versions, platform, codebook filename/version/hash, input and output paths, processed companies, source PDF hashes, disclaimer, and exact command.
+UTC timestamp, software version, Python version, package versions, platform, codebook filename/version/hash, input and output paths, processed companies, source PDF hashes retained for backwards compatibility, source document hashes, disclaimer, and exact command.
 
 
 ## validation_summary.csv
@@ -45,4 +45,4 @@ Company, item ID, disagreement issue, automatic applicability and score, manual 
 ## validation_manifest.json
 Validation timestamp, input paths, output path, and summary metrics.
 
-A technically unreadable PDF is not evidence of low IFRS 18 alignment. IFRS18-ORAS reports the company as unscorable when no usable text-native document is available. A zero score means readable documents were analysed and no matching evidence was found; `N/A` means the source package was technically insufficient for automatic scoring. OCR is not applied silently, and replacement text-native PDFs, XHTML or XBRL sources should be obtained.
+A technically unreadable source document is not evidence of low IFRS 18 alignment. IFRS18-ORAS reports the company as unscorable when no usable text-native document is available. A zero score means readable documents were analysed and no matching evidence was found; `N/A` means the source package was technically insufficient for automatic scoring. OCR is not applied silently, and replacement text-native PDF, XHTML, HTML, or Inline XBRL sources should be obtained.
