@@ -11,3 +11,11 @@
 - Review IAS 7 supplementary D items and their separation from the main score.
 - Review E transition-transparency items so they are not presented as completed implementation.
 - Approve future codebook revision process, versioning, changelog, tests, and comparability warnings.
+
+
+## ESEF/XHTML source handling review
+- Confirm that native ESEF XHTML/Inline XBRL extraction and hidden-section exclusion are appropriate for the empirical design.
+- Confirm whether EU samples should use the recommended `--preferred-format xhtml` setting or default `all` setting.
+- Review examples of PDF page locators and XHTML block/XPath locators in the HTML audit trail.
+- Confirm that duplicate SHA-256 exclusion and non-preferred-format exclusion are technical source-selection controls, not accounting judgements.
+- Interpret `main_evidence_coverage_pct` separately from supplementary IAS 7 dimension D coverage.

@@ -59,11 +59,19 @@ class Codebook:
 
 
 @dataclass(frozen=True)
-class PageText:
+class SourceTextBlock:
     document_filename: str
     document_sha256: str
-    page_number: int
+    page_number: int | None
     text: str
+    source_format: str = "pdf"
+    source_locator_type: str = "page_number"
+    source_locator: str = ""
+    block_index: int | None = None
+    xpath: str = ""
+
+
+PageText = SourceTextBlock
 
 
 @dataclass(frozen=True)
@@ -71,13 +79,18 @@ class DocumentManifest:
     company: str
     document_filename: str
     sha256: str
-    page_count: int
+    page_count: int | None
     extracted_character_count: int
     low_text_warning: bool
     processing_status: str
     scoring_eligible: bool
     exclusion_reason: str = ""
     error_message: str = ""
+    source_format: str = "pdf"
+    mime_type: str = "application/pdf"
+    parser_backend: str = "pymupdf"
+    inline_xbrl_detected: bool = False
+    block_count: int | None = None
 
 
 @dataclass(frozen=True)
@@ -89,9 +102,14 @@ class Evidence:
     dimension: str
     match_type: EvidenceType
     regex_pattern: str
-    page_number: int
+    page_number: int | None
     matched_text: str
     contextual_snippet: str
+    source_format: str = "pdf"
+    source_locator_type: str = "page_number"
+    source_locator: str = ""
+    block_index: int | None = None
+    xpath: str = ""
 
 
 @dataclass
@@ -129,6 +147,9 @@ class CompanyScore:
     ifrs18_oras_0_100: float | None
     reporting_adjustment_gap_0_100: float | None
     evidence_coverage_pct: float | None
+    main_evidence_coverage_pct: float | None = None
+    supplementary_D_evidence_coverage_pct: float | None = None
+    total_evidence_coverage_pct: float | None = None
     dimension_A_profit_or_loss: float | None = None
     dimension_B_mpm_candidate: float | None = None
     dimension_C_disaggregation_expenses: float | None = None

@@ -45,6 +45,11 @@ def find_pattern_evidence(
                         contextual_snippet=contextual_snippet(
                             page.text, match.start(), match.end()
                         ),
+                        source_format=page.source_format,
+                        source_locator_type=page.source_locator_type,
+                        source_locator=page.source_locator,
+                        block_index=page.block_index,
+                        xpath=page.xpath,
                     )
                 )
                 count += 1
