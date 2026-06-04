@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
+from typing import Literal
 
 from ifrs18_oras.config import load_codebook
 from ifrs18_oras.detection import any_pattern, find_pattern_evidence
-from ifrs18_oras.extraction import SUPPORTED_DOCUMENT_EXTENSIONS, extract_document
+from ifrs18_oras.extraction import (
+    SUPPORTED_DOCUMENT_EXTENSIONS,
+    extract_document,
+    mime_type_for_format,
+    source_format_for_path,
+)
+from ifrs18_oras.hashing import sha256_file
 from ifrs18_oras.models import (
     Codebook,
     CompanyScore,
+    DimensionConfig,
     DimensionScore,
     DocumentManifest,
     Evidence,
@@ -16,6 +25,8 @@ from ifrs18_oras.models import (
     PageText,
     RunResult,
 )
+
+PreferredFormat = Literal["all", "xhtml", "pdf"]
 
 DIMENSION_COLUMNS = {
     "A": "dimension_A_profit_or_loss",
@@ -26,7 +37,11 @@ DIMENSION_COLUMNS = {
 }
 
 
-def score_input(input_dir: Path, codebook_path: Path) -> tuple[RunResult, Codebook, str]:
+def score_input(
+    input_dir: Path, codebook_path: Path, preferred_format: PreferredFormat = "all"
+) -> tuple[RunResult, Codebook, str]:
+    if preferred_format not in {"all", "xhtml", "pdf"}:
+        raise ValueError(f"Unknown preferred format: {preferred_format}")
     if not input_dir.exists():
         raise FileNotFoundError(f"Input directory does not exist: {input_dir}")
     company_dirs = sorted(
@@ -37,14 +52,7 @@ def score_input(input_dir: Path, codebook_path: Path) -> tuple[RunResult, Codebo
     codebook, codebook_hash = load_codebook(codebook_path)
     result = RunResult()
     for company_dir in company_dirs:
-        documents = sorted(
-            [
-                path
-                for path in company_dir.iterdir()
-                if path.is_file() and path.suffix.lower() in SUPPORTED_DOCUMENT_EXTENSIONS
-            ],
-            key=lambda p: p.name.lower(),
-        )
+        documents = discover_source_documents(company_dir)
         if not documents:
             supported = ", ".join(SUPPORTED_DOCUMENT_EXTENSIONS)
             raise ValueError(
@@ -52,8 +60,38 @@ def score_input(input_dir: Path, codebook_path: Path) -> tuple[RunResult, Codebo
             )
         pages: list[PageText] = []
         manifests: list[DocumentManifest] = []
+        seen_hashes: set[str] = set()
+        selected_formats = selected_source_formats(documents, preferred_format)
         for document in documents:
+            relative_name = document.relative_to(company_dir).as_posix()
+            digest = sha256_file(document)
+            source_format = source_format_for_path(document)
+            if digest in seen_hashes:
+                manifests.append(
+                    excluded_manifest(
+                        company=company_dir.name,
+                        filename=relative_name,
+                        digest=digest,
+                        source_format=source_format,
+                        exclusion_reason="duplicate_sha256",
+                    )
+                )
+                continue
+            seen_hashes.add(digest)
+            if source_format not in selected_formats:
+                manifests.append(
+                    excluded_manifest(
+                        company=company_dir.name,
+                        filename=relative_name,
+                        digest=digest,
+                        source_format=source_format,
+                        exclusion_reason="non_preferred_format",
+                    )
+                )
+                continue
             doc_pages, manifest = extract_document(company_dir.name, document)
+            doc_pages = [replace(page, document_filename=relative_name) for page in doc_pages]
+            manifest = replace(manifest, document_filename=relative_name)
             if manifest.scoring_eligible:
                 pages.extend(doc_pages)
             manifests.append(manifest)
@@ -64,6 +102,51 @@ def score_input(input_dir: Path, codebook_path: Path) -> tuple[RunResult, Codebo
         result.evidence.extend(company_result.evidence)
         result.manifests.extend(manifests)
     return result, codebook, codebook_hash
+
+
+def discover_source_documents(company_dir: Path) -> list[Path]:
+    return sorted(
+        [
+            path
+            for path in company_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in SUPPORTED_DOCUMENT_EXTENSIONS
+        ],
+        key=lambda p: p.relative_to(company_dir).as_posix().lower(),
+    )
+
+
+def selected_source_formats(documents: list[Path], preferred_format: PreferredFormat) -> set[str]:
+    formats = {source_format_for_path(path) for path in documents}
+    has_xhtml = bool(formats & {"xhtml", "html"})
+    has_pdf = "pdf" in formats
+    if preferred_format == "xhtml" and has_xhtml:
+        return {"xhtml", "html"}
+    if preferred_format == "pdf" and has_pdf:
+        return {"pdf"}
+    return {"pdf", "xhtml", "html"}
+
+
+def excluded_manifest(
+    *, company: str, filename: str, digest: str, source_format: str, exclusion_reason: str
+) -> DocumentManifest:
+    parser_backend = "pymupdf" if source_format == "pdf" else "lxml"
+    return DocumentManifest(
+        company=company,
+        document_filename=filename,
+        sha256=digest,
+        page_count=0 if source_format == "pdf" else None,
+        extracted_character_count=0,
+        low_text_warning=False,
+        processing_status="excluded",
+        scoring_eligible=False,
+        exclusion_reason=exclusion_reason,
+        error_message="",
+        source_format=source_format,
+        mime_type=mime_type_for_format(source_format),
+        parser_backend=parser_backend,
+        inline_xbrl_detected=False,
+        block_count=None if source_format == "pdf" else 0,
+    )
 
 
 def company_processing_status(manifests: list[DocumentManifest], has_pages: bool = False) -> str:
@@ -119,6 +202,9 @@ def unscorable_company(
             ifrs18_oras_0_100=None,
             reporting_adjustment_gap_0_100=None,
             evidence_coverage_pct=None,
+            main_evidence_coverage_pct=None,
+            supplementary_D_evidence_coverage_pct=None,
+            total_evidence_coverage_pct=None,
             dimension_A_profit_or_loss=None,
             dimension_B_mpm_candidate=None,
             dimension_C_disaggregation_expenses=None,
@@ -148,6 +234,25 @@ def is_applicable(item: ItemConfig, triggers: dict[str, bool]) -> bool:
     if rule == "requires_function_expenses":
         return triggers["function_expenses"]
     raise ValueError(f"Unknown applicability rule for {item.id}: {rule}")
+
+
+def evidence_coverage(
+    rows: list[ItemScore], dimensions: list[DimensionConfig], include_supplementary: bool | None
+) -> float:
+    supplementary_by_dimension = {dimension.id: dimension.supplementary for dimension in dimensions}
+    applicable = [
+        row
+        for row in rows
+        if row.applicable
+        and (
+            include_supplementary is None
+            or supplementary_by_dimension[row.dimension] == include_supplementary
+        )
+    ]
+    if not applicable:
+        return 0.0
+    covered = [row for row in applicable if row.evidence_count > 0]
+    return round(100 * len(covered) / len(applicable), 4)
 
 
 def score_company(
@@ -222,7 +327,13 @@ def score_company(
     result.evidence.extend(
         sorted(
             all_evidence,
-            key=lambda e: (e.item_id, e.document_filename, e.page_number, e.regex_pattern),
+            key=lambda e: (
+                e.item_id,
+                e.document_filename,
+                e.source_locator,
+                e.page_number or 0,
+                e.regex_pattern,
+            ),
         )
     )
 
@@ -253,15 +364,18 @@ def score_company(
         )
     oras = round(main_numerator / main_denominator, 4) if main_denominator else None
     gap = round(100 - oras, 4) if oras is not None else None
-    applicable_scored = [row for row in result.item_scores if row.applicable]
-    covered = [row for row in applicable_scored if row.evidence_count > 0]
-    coverage = round(100 * len(covered) / len(applicable_scored), 4) if applicable_scored else 0.0
+    main_coverage = evidence_coverage(result.item_scores, codebook.dimensions, False)
+    supplementary_coverage = evidence_coverage(result.item_scores, codebook.dimensions, True)
+    total_coverage = evidence_coverage(result.item_scores, codebook.dimensions, None)
     result.company_scores.append(
         CompanyScore(
             company=company,
             ifrs18_oras_0_100=oras,
             reporting_adjustment_gap_0_100=gap,
-            evidence_coverage_pct=coverage,
+            evidence_coverage_pct=main_coverage,
+            main_evidence_coverage_pct=main_coverage,
+            supplementary_D_evidence_coverage_pct=supplementary_coverage,
+            total_evidence_coverage_pct=total_coverage,
             dimension_A_profit_or_loss=dimension_values.get("A"),
             dimension_B_mpm_candidate=dimension_values.get("B"),
             dimension_C_disaggregation_expenses=dimension_values.get("C"),

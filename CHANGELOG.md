@@ -28,3 +28,9 @@ Codebook changes affecting scores require a new codebook version, changelog entr
 - Added the constrained `lxml>=5.0,<7` runtime dependency for robust XHTML parsing and recorded `lxml` in run package-version manifests.
 - Preserved existing PDF extraction and scoring while adding source-document hashes to `run_manifest.json`; `source_pdf_hashes` remains for backwards compatibility.
 - Updated tests and documentation for mixed PDF/XHTML packages, hidden Inline XBRL text exclusion, and supported-source handling.
+
+## 0.1.0 ESEF XHTML audit hardening - 2026-06-04
+
+- Required lxml as the XHTML/HTML parser backend with controlled `xhtml_parser_unavailable` exclusions instead of silent fallback parsing.
+- Added source-aware evidence locators, recursive discovery, duplicate SHA-256 exclusion, preferred-format selection, expanded extraction manifests, and separated evidence-coverage metrics.
+- Updated tests and documentation for audit-safe ESEF workflows while preserving PDF functionality and backwards-compatible manifest fields.

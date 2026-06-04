@@ -273,6 +273,7 @@ def test_mixed_package_excludes_unusable_and_scores_readable_pdf(tmp_path: Path)
 
 
 def test_xhtml_esef_package_scores_visible_text_and_excludes_hidden_ixbrl(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
     company = tmp_path / "raw" / "XhtmlIssuer"
     company.mkdir(parents=True)
     report = company / "annual_report.xhtml"
@@ -317,6 +318,7 @@ def test_xhtml_esef_package_scores_visible_text_and_excludes_hidden_ixbrl(tmp_pa
 
 
 def test_mixed_pdf_and_xhtml_package_scores_both_formats(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
     company = tmp_path / "raw" / "MixedFormats"
     generate_demo_pdf(company / "readable.pdf")
     (company / "annual_report.html").write_text(
@@ -341,6 +343,167 @@ def test_mixed_pdf_and_xhtml_package_scores_both_formats(tmp_path: Path) -> None
     }
     assert manifests["readable.pdf"]["scoring_eligible"] == "True"
     assert manifests["annual_report.html"]["scoring_eligible"] == "True"
+
+
+def test_recursive_nested_esef_discovery_and_manifest_locator(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
+    company = tmp_path / "raw" / "NestedESEF"
+    nested = company / "esef" / "package"
+    nested.mkdir(parents=True)
+    (nested / "report.xhtml").write_text(
+        "<html><body><section><p>Operating profit is presented.</p><p>IFRS 18 planned adoption with impact assessment.</p></section></body></html>",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    manifest = read_rows(out / "extraction_manifest.csv")[0]
+    assert manifest["document_filename"] == "esef/package/report.xhtml"
+    assert manifest["source_format"] == "xhtml"
+    assert manifest["mime_type"] == "application/xhtml+xml"
+    assert manifest["parser_backend"] == "lxml"
+    assert manifest["page_count"] == "N/A"
+    assert int(manifest["block_count"]) >= 2
+    evidence = read_rows(out / "evidence_log.csv")
+    assert evidence
+    assert evidence[0]["page_number"] == "N/A"
+    assert evidence[0]["block_index"] != "N/A"
+    assert evidence[0]["xpath"] != "N/A"
+
+
+def test_duplicate_sha256_excludes_second_pdf_deterministically(tmp_path: Path) -> None:
+    company = tmp_path / "raw" / "DupPdf"
+    generate_demo_pdf(company / "a.pdf")
+    (company / "b.pdf").write_bytes((company / "a.pdf").read_bytes())
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    manifests = {
+        row["document_filename"]: row for row in read_rows(out / "extraction_manifest.csv")
+    }
+    assert manifests["a.pdf"]["scoring_eligible"] == "True"
+    assert manifests["b.pdf"]["scoring_eligible"] == "False"
+    assert manifests["b.pdf"]["exclusion_reason"] == "duplicate_sha256"
+    score = read_rows(out / "company_scores.csv")[0]
+    assert score["documents_scored"] == "1"
+    assert score["excluded_documents"] == "1"
+
+
+def test_duplicate_sha256_excludes_second_xhtml_deterministically(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
+    company = tmp_path / "raw" / "DupXhtml"
+    company.mkdir(parents=True)
+    content = "<html><body><p>Operating profit is presented.</p><p>IFRS 18 planned adoption with impact assessment.</p></body></html>"
+    (company / "a.xhtml").write_text(content, encoding="utf-8")
+    (company / "b.xhtml").write_text(content, encoding="utf-8")
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    manifests = {
+        row["document_filename"]: row for row in read_rows(out / "extraction_manifest.csv")
+    }
+    assert manifests["a.xhtml"]["scoring_eligible"] == "True"
+    assert manifests["b.xhtml"]["exclusion_reason"] == "duplicate_sha256"
+
+
+def test_preferred_format_xhtml_excludes_pdf_when_xhtml_exists(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
+    company = tmp_path / "raw" / "PreferredXhtml"
+    generate_demo_pdf(company / "annual.pdf")
+    (company / "report.xhtml").write_text(
+        "<html><body><p>Operating profit is presented.</p><p>IFRS 18 planned adoption with impact assessment.</p></body></html>",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+        "--preferred-format",
+        "xhtml",
+    )
+    assert result.returncode == 0, result.stderr
+    manifests = {
+        row["document_filename"]: row for row in read_rows(out / "extraction_manifest.csv")
+    }
+    assert manifests["annual.pdf"]["exclusion_reason"] == "non_preferred_format"
+    assert manifests["report.xhtml"]["scoring_eligible"] == "True"
+    assert read_rows(out / "company_scores.csv")[0]["documents_scored"] == "1"
+
+
+def test_preferred_format_pdf_excludes_xhtml_when_pdf_exists(tmp_path: Path) -> None:
+    company = tmp_path / "raw" / "PreferredPdf"
+    generate_demo_pdf(company / "annual.pdf")
+    (company / "report.xhtml").write_text(
+        "<html><body><p>Operating profit is presented.</p></body></html>", encoding="utf-8"
+    )
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+        "--preferred-format",
+        "pdf",
+    )
+    assert result.returncode == 0, result.stderr
+    manifests = {
+        row["document_filename"]: row for row in read_rows(out / "extraction_manifest.csv")
+    }
+    assert manifests["annual.pdf"]["scoring_eligible"] == "True"
+    assert manifests["report.xhtml"]["exclusion_reason"] == "non_preferred_format"
+    assert read_rows(out / "company_scores.csv")[0]["documents_scored"] == "1"
+
+
+def test_coverage_columns_are_separated(tmp_path: Path) -> None:
+    company = tmp_path / "raw" / "Coverage"
+    generate_demo_pdf(company / "annual.pdf")
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    row = read_rows(out / "company_scores.csv")[0]
+    assert row["evidence_coverage_pct"] == row["main_evidence_coverage_pct"]
+    assert row["supplementary_D_evidence_coverage_pct"] != ""
+    assert row["total_evidence_coverage_pct"] != ""
 
 
 def test_company_folder_without_supported_documents_fails_clearly(tmp_path: Path) -> None:

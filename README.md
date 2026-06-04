@@ -46,15 +46,15 @@ data/raw/Airbus/esef_annual_report_2025.xhtml
 data/raw/Leonardo/annual_report_2025.html
 ```
 
-Each folder is scored independently. XHTML/HTML/Inline XBRL files are parsed natively with `lxml`; they are not converted to PDF. The extractor removes non-visible script/style/head content and Inline XBRL hidden sections before deterministic regex scoring. The scoring command performs no web requests and no default OCR.
+Each folder is scored independently and recursively, so nested ESEF package paths such as `data/raw/Airbus/esef/package/report.xhtml` are discovered deterministically. XHTML/HTML/Inline XBRL files are parsed natively with the required `lxml` backend; they are not converted to PDF and there is no silent parser fallback. If `lxml` is unavailable, the XHTML/HTML document is excluded with `xhtml_parser_unavailable`. The extractor removes non-visible script/style/head content and Inline XBRL hidden sections before deterministic regex scoring. Duplicate files with the same SHA-256 are excluded within each company folder as `duplicate_sha256`. The scoring command performs no web requests and no default OCR. For EU core scoring, use `--preferred-format xhtml`; allowed values are `all` (default), `xhtml`, and `pdf`.
 
 ## Outputs
 
-Each run writes `company_scores.csv`, `company_scores.json`, `dimension_scores.csv`, `item_scores.csv`, `evidence_log.csv`, `extraction_manifest.csv`, `run_manifest.json`, and `html_reports/<company>.html`. Inspect the HTML audit trail to see source-location snippets, matched regex patterns, item scores, document hashes, and the codebook hash.
+Each run writes `company_scores.csv`, `company_scores.json`, `dimension_scores.csv`, `item_scores.csv`, `evidence_log.csv`, `extraction_manifest.csv`, `run_manifest.json`, and `html_reports/<company>.html`. Inspect the HTML audit trail to see source-location snippets, matched regex patterns, item scores, document hashes, and the codebook hash. PDF evidence retains page-number locators; XHTML/HTML evidence uses deterministic block indexes and XPath locators where available.
 
 ## Scoring formula
 
-`DimensionScore(i,d) = 100 × Σ(ItemWeight(j) × ItemScore(i,j)) / Σ(ItemWeight(j))`, using only applicable items. `IFRS18_ORAS(i) = Σ(DimensionWeight(d) × DimensionScore(i,d)) / Σ(DimensionWeight(d))`, using only applicable main dimensions. `ReportingAdjustmentGap(i) = 100 - IFRS18_ORAS(i)`.
+`DimensionScore(i,d) = 100 × Σ(ItemWeight(j) × ItemScore(i,j)) / Σ(ItemWeight(j))`, using only applicable items. `IFRS18_ORAS(i) = Σ(DimensionWeight(d) × DimensionScore(i,d)) / Σ(DimensionWeight(d))`, using only applicable main dimensions. `ReportingAdjustmentGap(i) = 100 - IFRS18_ORAS(i)`. Main evidence coverage excludes supplementary IAS 7 dimension D and is the primary coverage metric; `evidence_coverage_pct` remains a backwards-compatible alias for `main_evidence_coverage_pct`.
 
 ## Reproducibility protocol
 

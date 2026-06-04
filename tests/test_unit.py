@@ -157,10 +157,16 @@ def test_formulas_gap_coverage_and_supplementary_d_exclusion() -> None:
     main_without_d = ((40 * a.dimension_score) + (25 * 0) + (10 * 20)) / (40 + 25 + 10)
     assert score.ifrs18_oras_0_100 == pytest.approx(main_without_d, abs=0.0001)
     assert score.reporting_adjustment_gap_0_100 == pytest.approx(100 - score.ifrs18_oras_0_100)
-    applicable = [row for row in result.item_scores if row.applicable]
-    covered = [row for row in applicable if row.evidence_count]
-    assert score.evidence_coverage_pct == pytest.approx(
-        100 * len(covered) / len(applicable), abs=0.0001
+    main_applicable = [row for row in result.item_scores if row.applicable and row.dimension != "D"]
+    main_covered = [row for row in main_applicable if row.evidence_count]
+    all_applicable = [row for row in result.item_scores if row.applicable]
+    all_covered = [row for row in all_applicable if row.evidence_count]
+    assert score.evidence_coverage_pct == score.main_evidence_coverage_pct
+    assert score.main_evidence_coverage_pct == pytest.approx(
+        100 * len(main_covered) / len(main_applicable), abs=0.0001
+    )
+    assert score.total_evidence_coverage_pct == pytest.approx(
+        100 * len(all_covered) / len(all_applicable), abs=0.0001
     )
 
 
@@ -185,19 +191,44 @@ def test_deterministic_scoring_repeated() -> None:
     assert one == two
 
 
-def test_xhtml_extraction_normalises_visible_text_and_uses_single_document_page(
+def test_xhtml_extraction_normalises_visible_text_and_uses_blocks_and_locators(
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "report.htm"
+    pytest.importorskip("lxml")
     path.write_text(
         "<html><body><p>Operating&nbsp;profit</p><script>Hidden adjusted EBIT</script><table><tr><td>IFRS 18</td></tr></table></body></html>",
         encoding="utf-8",
     )
     pages, manifest = extract_xhtml("HtmlCo", path)
     assert manifest.scoring_eligible
-    assert manifest.page_count == 1
-    assert len(pages) == 1
-    assert pages[0].page_number == 1
-    assert "Operating profit" in pages[0].text
-    assert "IFRS 18" in pages[0].text
-    assert "Hidden adjusted EBIT" not in pages[0].text
+    assert manifest.page_count is None
+    assert manifest.block_count == len(pages)
+    assert pages[0].page_number is None
+    assert pages[0].block_index == 1
+    assert pages[0].source_locator_type == "xpath_or_block_index"
+    assert pages[0].xpath
+    visible = " ".join(page.text for page in pages)
+    assert "Operating profit" in visible
+    assert "IFRS 18" in visible
+    assert "Hidden adjusted EBIT" not in visible
+
+
+def test_missing_lxml_is_controlled_manifest_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import ifrs18_oras.extraction as extraction
+
+    path = tmp_path / "report.xhtml"
+    path.write_text("<html><body><p>Operating profit</p></body></html>", encoding="utf-8")
+
+    def missing_lxml() -> None:
+        raise ImportError("No module named lxml")
+
+    monkeypatch.setattr(extraction, "_lxml_html", missing_lxml)
+    pages, manifest = extract_xhtml("HtmlCo", path)
+    assert pages == []
+    assert manifest.processing_status == "error"
+    assert not manifest.scoring_eligible
+    assert manifest.exclusion_reason == "xhtml_parser_unavailable"
+    assert "lxml parser backend unavailable" in manifest.error_message
