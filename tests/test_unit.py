@@ -12,7 +12,8 @@ from ifrs18_oras.hashing import sha256_file, sha256_text
 from ifrs18_oras.models import PageText
 from ifrs18_oras.scoring import is_applicable, score_company
 
-CODEBOOK = Path("config/codebook_v0.1.0.json")
+CODEBOOK = Path("config/codebook_v0.1.1.json")
+OLD_CODEBOOK = Path("config/codebook_v0.1.0.json")
 
 
 def test_text_normalisation() -> None:
@@ -96,9 +97,89 @@ def test_status_validation(tmp_path: Path) -> None:
 def test_codebook_validation_and_deterministic_hash() -> None:
     codebook, digest_one = load_codebook(CODEBOOK)
     _, digest_two = load_codebook(CODEBOOK)
-    assert codebook.version == "0.1.0-provisional"
+    assert codebook.version == "0.1.1-provisional"
     assert digest_one == digest_two
     assert len(digest_one) == 64
+
+
+def test_historical_codebook_v0_1_0_still_validates() -> None:
+    codebook, digest = load_codebook(OLD_CODEBOOK)
+    assert codebook.version == "0.1.0-provisional"
+    assert len(digest) == 64
+
+
+def test_adjusted_ebit_regex_and_mpm_applicability() -> None:
+    codebook, _ = load_codebook(CODEBOOK)
+    for text in ["Adjusted EBIT", "Adjusted EBITDA"]:
+        result = score_company("C", [PageText("x.pdf", "h", 1, text)], [], codebook)
+        score = result.company_scores[0]
+        items = {row.item_id: row for row in result.item_scores}
+        assert score.mpm_candidate_detected
+        assert (
+            next(row for row in result.dimension_scores if row.dimension_id == "B").dimension_score
+            is not None
+        )
+        assert items["B1"].applicable
+        assert items["B1"].strongest_evidence_type == "strong"
+    result = score_company("C", [PageText("x.pdf", "h", 1, "Adjusted EBITD")], [], codebook)
+    assert not result.company_scores[0].mpm_candidate_detected
+    assert (
+        next(row for row in result.dimension_scores if row.dimension_id == "B").dimension_score
+        is None
+    )
+
+
+def item_score_for_text(item_id: str, text: str) -> float | None:
+    codebook, _ = load_codebook(CODEBOOK)
+    result = score_company("C", [PageText("x.pdf", "h", 1, text)], [], codebook)
+    return next(row for row in result.item_scores if row.item_id == item_id).score
+
+
+def test_e2_effective_date_patterns() -> None:
+    assert (
+        item_score_for_text("E2", "IFRS 18 applies to annual periods beginning on 1 January 2027.")
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E2",
+            "IFRS 18 is effective for annual reporting periods beginning on or after 1 January 2027.",
+        )
+        == 1.0
+    )
+    assert item_score_for_text("E2", "The annual report discusses current trading periods.") == 0.0
+
+
+def test_e3_impact_assessment_patterns() -> None:
+    assert item_score_for_text("E3", "The Group is assessing the impact of IFRS 18.") == 1.0
+    assert item_score_for_text("E3", "The Group is evaluating the impact of IFRS 18.") == 1.0
+    assert (
+        item_score_for_text(
+            "E3", "IFRS 18 is mentioned and impact appears in another unrelated paragraph."
+        )
+        == 0.0
+    )
+
+
+def test_e4_affected_reporting_area_patterns() -> None:
+    assert (
+        item_score_for_text(
+            "E4",
+            "The impact of IFRS 18 concerns presentation, aggregation, disaggregation and management-defined performance measures.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text("E4", "IFRS 18 affects presentation and aggregation requirements.")
+        == 1.0
+    )
+    assert item_score_for_text("E4", "IFRS 18 is a new standard.") == 0.0
+    assert (
+        item_score_for_text(
+            "E4", "Aggregation and presentation are discussed without naming the standard."
+        )
+        == 0.0
+    )
 
 
 def test_conditional_applicability() -> None:

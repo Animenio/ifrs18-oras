@@ -34,3 +34,11 @@ Codebook changes affecting scores require a new codebook version, changelog entr
 - Required lxml as the XHTML/HTML parser backend with controlled `xhtml_parser_unavailable` exclusions instead of silent fallback parsing.
 - Added source-aware evidence locators, recursive discovery, duplicate SHA-256 exclusion, preferred-format selection, expanded extraction manifests, and separated evidence-coverage metrics.
 - Updated tests and documentation for audit-safe ESEF workflows while preserving PDF functionality and backwards-compatible manifest fields.
+
+
+## 0.1.1 provisional codebook hardening - 2026-06-04
+
+- Added `config/codebook_v0.1.1.json` while preserving historical `config/codebook_v0.1.0.json` for reproducibility.
+- Corrected the Adjusted EBIT/EBITDA MPM-candidate regex from `adjusted\s+EBITDA?` to `adjusted\s+EBIT(?:DA)?`, preventing `Adjusted EBITD` matches and enabling `Adjusted EBIT`.
+- Added narrow E2, E3, and E4 transition-transparency patterns for annual reporting periods beginning, IFRS 18 impact assessment/evaluation, and IFRS 18 affected reporting areas.
+- Added deterministic XHTML/HTML context-window matching over at most three consecutive blocks in one document with auditable context locators; PDF matching remains page-local.

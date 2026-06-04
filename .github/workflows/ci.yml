@@ -16,17 +16,36 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest -q
+      - run: python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.1.json
       - run: python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.0.json
       - run: python -m ifrs18_oras demo --output-dir outputs/demo
       - run: test -f outputs/demo/company_scores.csv && test -f outputs/demo/evidence_log.csv && test -f outputs/demo/html_reports/Fictional_Aero_Demo.html
-      - run: test ! -f src/fitz.py && test ! -f src/pymupdf.py
+      - run: test ! -f src/fitz.py && test ! -f src/pymupdf.py && test ! -f src/lxml.py
+      - run: python -m ifrs18_oras score --help | grep -- '--preferred-format'
       - run: |
           python - <<'PY'
           from pathlib import Path
           import pymupdf
+          from lxml import etree
           repo_src = Path.cwd() / "src"
-          module_path = Path(pymupdf.__file__).resolve()
-          print(module_path)
-          if module_path.is_relative_to(repo_src.resolve()):
-              raise SystemExit("pymupdf is imported from repository src")
+          for name, module_file in {"pymupdf": pymupdf.__file__, "lxml": etree.__file__}.items():
+              module_path = Path(module_file).resolve()
+              print(name, module_path)
+              if module_path.is_relative_to(repo_src.resolve()):
+                  raise SystemExit(f"{name} is imported from repository src")
           PY
+      - run: |
+          tmpdir=$(mktemp -d)
+          mkdir -p "$tmpdir/raw/SmokeIssuer"
+          cat > "$tmpdir/raw/SmokeIssuer/report.xhtml" <<'HTML'
+          <html xmlns="http://www.w3.org/1999/xhtml" xmlns:ix="http://www.xbrl.org/2013/inlineXBRL"><body>
+            <ix:hidden><ix:nonNumeric name="ifrs-full:Hidden">Hidden adjusted EBITD should not score</ix:nonNumeric></ix:hidden>
+            <p>Adjusted</p><p>EBIT is used by management.</p>
+            <p>IFRS 18 is effective for annual reporting periods beginning on or after 1 January 2027.</p>
+            <p>The Group is assessing the impact of IFRS 18.</p>
+            <p>IFRS 18 affects presentation and aggregation requirements.</p>
+          </body></html>
+          HTML
+          python -m ifrs18_oras score --input-dir "$tmpdir/raw" --output-dir "$tmpdir/out" --codebook config/codebook_v0.1.1.json --preferred-format xhtml
+          grep -q 'xhtml' "$tmpdir/out/extraction_manifest.csv"
+          grep -q 'context_locators' "$tmpdir/out/evidence_log.csv"

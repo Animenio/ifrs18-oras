@@ -13,7 +13,8 @@ from ifrs18_oras.cli import generate_demo_pdf, generate_fictional_fixture_input
 from ifrs18_oras.hashing import sha256_file
 from ifrs18_oras.reporting import package_versions
 
-CODEBOOK = "config/codebook_v0.1.0.json"
+CODEBOOK = "config/codebook_v0.1.1.json"
+OLD_CODEBOOK = "config/codebook_v0.1.0.json"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 
@@ -43,8 +44,32 @@ def test_package_versions_has_no_empty_package_key() -> None:
     assert "" not in versions
 
 
+def test_default_cli_codebook_points_to_v0_1_1() -> None:
+    from ifrs18_oras.cli import DEFAULT_CODEBOOK
+
+    assert DEFAULT_CODEBOOK.as_posix() == CODEBOOK
+
+
+def test_extraction_has_no_stdlib_html_fallback_imports() -> None:
+    source = (SRC_ROOT / "ifrs18_oras" / "extraction.py").read_text(encoding="utf-8")
+    assert "import importlib.util" not in source
+    assert "from html.parser import HTMLParser" not in source
+
+
+def test_historical_codebook_cli_validation(tmp_path: Path) -> None:
+    result = run_cli("validate-codebook", "--codebook", OLD_CODEBOOK)
+    assert result.returncode == 0, result.stderr
+    assert "version=0.1.0-provisional" in result.stdout
+
+
+def test_current_codebook_cli_validation() -> None:
+    result = run_cli("validate-codebook", "--codebook", CODEBOOK)
+    assert result.returncode == 0, result.stderr
+    assert "version=0.1.1-provisional" in result.stdout
+
+
 def test_no_local_dependency_shadowing() -> None:
-    forbidden = {"fitz.py", "pymupdf.py", "yaml.py", "pydantic.py"}
+    forbidden = {"fitz.py", "pymupdf.py", "yaml.py", "pydantic.py", "lxml.py"}
     found = {path.name for path in SRC_ROOT.glob("*.py") if path.name in forbidden}
     assert not found
 
@@ -504,6 +529,165 @@ def test_coverage_columns_are_separated(tmp_path: Path) -> None:
     assert row["evidence_coverage_pct"] == row["main_evidence_coverage_pct"]
     assert row["supplementary_D_evidence_coverage_pct"] != ""
     assert row["total_evidence_coverage_pct"] != ""
+
+
+def write_xhtml_company(root: Path, company: str, filename: str, paragraphs: list[str]) -> Path:
+    path = root / company / filename
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = "\n".join(f"<p>{text}</p>" for text in paragraphs)
+    path.write_text(
+        f'<html xmlns="http://www.w3.org/1999/xhtml"><body>{body}</body></html>',
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_xhtml_context_two_and_three_block_matches_and_locators(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
+    raw = tmp_path / "raw"
+    write_xhtml_company(
+        raw, "TwoBlock", "report.xhtml", ["Adjusted", "EBIT is used by management."]
+    )
+    write_xhtml_company(
+        raw,
+        "ThreeBlock",
+        "report.xhtml",
+        ["The Group is", "assessing the impact", "of IFRS 18."],
+    )
+    out = tmp_path / "out"
+    result = run_cli(
+        "score", "--input-dir", str(raw), "--output-dir", str(out), "--codebook", CODEBOOK
+    )
+    assert result.returncode == 0, result.stderr
+    rows = read_rows(out / "evidence_log.csv")
+    b1 = [row for row in rows if row["company"] == "TwoBlock" and row["item_id"] == "B1"]
+    e3 = [row for row in rows if row["company"] == "ThreeBlock" and row["item_id"] == "E3"]
+    assert b1 and b1[0]["context_block_start"] == "1" and b1[0]["context_block_end"] == "2"
+    assert " | " in b1[0]["context_locators"]
+    assert e3 and e3[0]["context_block_start"] == "1" and e3[0]["context_block_end"] == "3"
+
+
+def test_xhtml_context_four_blocks_non_match_and_no_cross_document_join(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
+    raw = tmp_path / "raw"
+    write_xhtml_company(
+        raw, "FourBlock", "report.xhtml", ["Adjusted", "noise", "more noise", "EBIT"]
+    )
+    company = raw / "CrossDoc"
+    write_xhtml_company(raw, "CrossDoc", "a.xhtml", ["Adjusted"])
+    write_xhtml_company(raw, "CrossDoc", "b.xhtml", ["EBIT"])
+    out = tmp_path / "out"
+    result = run_cli(
+        "score", "--input-dir", str(raw), "--output-dir", str(out), "--codebook", CODEBOOK
+    )
+    assert company.exists()
+    assert result.returncode == 0, result.stderr
+    rows = read_rows(out / "company_scores.csv")
+    scores = {row["company"]: row for row in rows}
+    items = read_rows(out / "item_scores.csv")
+    e3_four_block = [
+        row for row in items if row["company"] == "FourBlock" and row["item_id"] == "E3"
+    ][0]
+    assert e3_four_block["strongest_evidence_type"] == "none"
+    assert scores["CrossDoc"]["mpm_candidate_detected"] == "False"
+
+
+def test_pdf_pages_are_not_joined_for_context(tmp_path: Path) -> None:
+    company = tmp_path / "raw" / "PdfNoJoin"
+    generate_demo_pdf(company / "dummy.pdf")
+    # Replace with a two-page PDF where the MPM phrase is split across pages.
+    from ifrs18_oras.cli import create_pdf
+
+    create_pdf(company / "split.pdf", ["Adjusted", "EBIT"])
+    (company / "dummy.pdf").unlink()
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    row = read_rows(out / "company_scores.csv")[0]
+    assert row["mpm_candidate_detected"] == "False"
+
+
+def test_html_report_renders_na_not_none_for_unavailable_values(tmp_path: Path) -> None:
+    company = tmp_path / "raw" / "InvalidOnly"
+    company.mkdir(parents=True)
+    (company / "invalid.pdf").write_text("not a pdf", encoding="utf-8")
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(tmp_path / "raw"),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    html = (out / "html_reports" / "InvalidOnly.html").read_text(encoding="utf-8")
+    assert "None" not in html
+    assert "N/A" in html
+
+
+def test_xhtml_smoke_outputs_and_repeated_determinism(tmp_path: Path) -> None:
+    pytest.importorskip("lxml")
+    raw = tmp_path / "raw"
+    company = raw / "SmokeIssuer"
+    company.mkdir(parents=True)
+    (company / "report.xhtml").write_text(
+        """<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ix="http://www.xbrl.org/2013/inlineXBRL"><body>
+        <ix:hidden><ix:nonNumeric name="ifrs-full:Hidden">Hidden adjusted EBITD impact assessment</ix:nonNumeric></ix:hidden>
+        <p>Adjusted</p><p>EBIT is used by management.</p>
+        <p>IFRS 18 is effective for annual reporting periods beginning on or after 1 January 2027.</p>
+        <p>The Group is evaluating the impact of IFRS 18.</p>
+        <p>IFRS 18 affects presentation and aggregation requirements.</p>
+        </body></html>""",
+        encoding="utf-8",
+    )
+    outputs = []
+    for name in ["out1", "out2"]:
+        out = tmp_path / name
+        result = run_cli(
+            "score",
+            "--input-dir",
+            str(raw),
+            "--output-dir",
+            str(out),
+            "--codebook",
+            CODEBOOK,
+            "--preferred-format",
+            "xhtml",
+        )
+        assert result.returncode == 0, result.stderr
+        outputs.append(out)
+    score = read_rows(outputs[0] / "company_scores.csv")[0]
+    assert score["mpm_candidate_detected"] == "True"
+    item_scores = {row["item_id"]: row for row in read_rows(outputs[0] / "item_scores.csv")}
+    assert item_scores["B1"]["strongest_evidence_type"] == "strong"
+    assert item_scores["E2"]["strongest_evidence_type"] == "strong"
+    assert item_scores["E3"]["strongest_evidence_type"] == "strong"
+    assert item_scores["E4"]["strongest_evidence_type"] == "strong"
+    manifest = read_rows(outputs[0] / "extraction_manifest.csv")[0]
+    assert manifest["source_format"] == "xhtml"
+    assert manifest["parser_backend"] == "lxml"
+    evidence_text = (outputs[0] / "evidence_log.csv").read_text(encoding="utf-8")
+    assert "Hidden adjusted" not in evidence_text
+    assert "context_locators" in evidence_text
+    for rel in [
+        "company_scores.csv",
+        "item_scores.csv",
+        "evidence_log.csv",
+        "extraction_manifest.csv",
+    ]:
+        assert (outputs[0] / rel).read_text(encoding="utf-8") == (outputs[1] / rel).read_text(
+            encoding="utf-8"
+        )
 
 
 def test_company_folder_without_supported_documents_fails_clearly(tmp_path: Path) -> None:

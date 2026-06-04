@@ -27,7 +27,7 @@ Company, dimension ID/label, main-score weight, applicable and total item counts
 Company, item ID, dimension, label, IFRS reference, applicability rule, applicable flag, score, weight, weighted score, evidence count, strongest evidence type, and explanatory note.
 
 ## evidence_log.csv
-Company, document filename, document SHA-256, item ID, dimension, match type, regex pattern, page number, source format, source locator type, source locator, block index, XPath, matched text, and contextual snippet. PDF rows use page numbers; XHTML/HTML rows write `N/A` for page number and use block/XPath locators.
+Company, document filename, document SHA-256, item ID, dimension, match type, regex pattern, page number, source format, source locator type, source locator, block index, XPath, context block start, context block end, context locators, matched text, and contextual snippet. PDF rows use page numbers; XHTML/HTML rows write `N/A` for page number and use block/XPath locators.
 
 ## extraction_manifest.csv
 Company, document filename, SHA-256, source format, MIME type, parser backend, Inline XBRL detection flag, block count, page count, extracted character count, low-text warning flag, processing status, scoring-eligible flag, exclusion reason, and error message. `scoring_eligible=false` means the document was excluded from scoring because it was technically unusable (for example, no extractable text or extraction error).
@@ -51,3 +51,5 @@ Validation timestamp, input paths, output path, and summary metrics.
 A technically unreadable source document is not evidence of low IFRS 18 alignment. IFRS18-ORAS reports the company as unscorable when no usable text-native document is available. A zero score means readable documents were analysed and no matching evidence was found; `N/A` means the source package was technically insufficient for automatic scoring. OCR is not applied silently, and replacement text-native PDF, XHTML, HTML, or Inline XBRL sources should be obtained.
 
 Extraction exclusions include `duplicate_sha256`, `non_preferred_format`, `xhtml_parser_unavailable`, `no_extractable_text`, and `extraction_error`.
+
+For XHTML/HTML multi-block evidence, `context_block_start` and `context_block_end` identify the bounded consecutive block window and `context_locators` lists the ordered XPath/block locators joined with ` | `. For PDF evidence these context fields are `N/A` unless a single source block has an applicable locator.

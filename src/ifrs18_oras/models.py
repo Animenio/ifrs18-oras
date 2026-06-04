@@ -110,6 +110,9 @@ class Evidence:
     source_locator: str = ""
     block_index: int | None = None
     xpath: str = ""
+    context_block_start: int | None = None
+    context_block_end: int | None = None
+    context_locators: str = ""
 
 
 @dataclass

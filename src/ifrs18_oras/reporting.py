@@ -90,6 +90,9 @@ def write_outputs(
             "source_locator",
             "block_index",
             "xpath",
+            "context_block_start",
+            "context_block_end",
+            "context_locators",
             "matched_text",
             "contextual_snippet",
         ],
@@ -173,7 +176,7 @@ def write_html_company(path: Path, company: str, result: RunResult, codebook_has
     )
     for dimension in dimensions:
         body.append(
-            f"<tr><td>{dimension.dimension_id}</td><td>{html.escape(dimension.dimension_label)}</td><td>{dimension.dimension_score}</td></tr>"
+            f"<tr><td>{dimension.dimension_id}</td><td>{html.escape(dimension.dimension_label)}</td><td>{none_to_na(dimension.dimension_score)}</td></tr>"
         )
     body.extend(
         [
@@ -182,11 +185,11 @@ def write_html_company(path: Path, company: str, result: RunResult, codebook_has
     )
     for item in items:
         body.append(
-            f"<tr><td>{item.item_id}</td><td>{html.escape(item.label)}</td><td>{item.applicable}</td><td>{item.score}</td><td>{item.evidence_count}</td></tr>"
+            f"<tr><td>{item.item_id}</td><td>{html.escape(item.label)}</td><td>{item.applicable}</td><td>{none_to_na(item.score)}</td><td>{item.evidence_count}</td></tr>"
         )
     body.extend(
         [
-            "</table><h2>Evidence</h2><table><tr><th>Item</th><th>Document</th><th>Locator</th><th>Type</th><th>Pattern</th><th>Snippet</th></tr>"
+            "</table><h2>Evidence</h2><table><tr><th>Item</th><th>Document</th><th>Locator</th><th>Context locators</th><th>Type</th><th>Pattern</th><th>Snippet</th></tr>"
         ]
     )
     for row in evidence:
@@ -194,6 +197,7 @@ def write_html_company(path: Path, company: str, result: RunResult, codebook_has
             "<tr>"
             f"<td>{row.item_id}</td><td>{html.escape(row.document_filename)}</td>"
             f"<td>{html.escape(row.source_locator_type)}: {html.escape(str(row.source_locator or none_to_na(row.page_number)))}</td>"
+            f"<td>{html.escape(str(none_to_na(row.context_locators)))}</td>"
             f"<td>{row.match_type}</td><td><code>{html.escape(row.regex_pattern)}</code></td>"
             f"<td>{html.escape(row.contextual_snippet)}</td></tr>"
         )

@@ -19,3 +19,9 @@
 - Review examples of PDF page locators and XHTML block/XPath locators in the HTML audit trail.
 - Confirm that duplicate SHA-256 exclusion and non-preferred-format exclusion are technical source-selection controls, not accounting judgements.
 - Interpret `main_evidence_coverage_pct` separately from supplementary IAS 7 dimension D coverage.
+
+
+## Codebook v0.1.1 review
+- Review the corrected `adjusted EBIT(?:DA)?` regex for MPM-candidate triggering and B1 evidence.
+- Review the added E2, E3, and E4 IFRS 18 transition-disclosure patterns for false positives and false negatives.
+- Review examples where XHTML evidence uses a three-block context window and confirm the joined evidence remains auditable.
