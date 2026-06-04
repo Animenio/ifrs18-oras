@@ -13,7 +13,7 @@ from ifrs18_oras.reporting import write_outputs
 from ifrs18_oras.scoring import score_input
 from ifrs18_oras.validation import validate_subsample
 
-DEFAULT_CODEBOOK = Path("config/codebook_v0.1.0.json")
+DEFAULT_CODEBOOK = Path("config/codebook_v0.1.1.json")
 
 
 def _pymupdf() -> Any:
@@ -26,8 +26,14 @@ def utc_timestamp() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def run_score(input_dir: Path, output_dir: Path, codebook_path: Path, command: str) -> None:
-    result, codebook, codebook_hash = score_input(input_dir, codebook_path)
+def run_score(
+    input_dir: Path,
+    output_dir: Path,
+    codebook_path: Path,
+    command: str,
+    preferred_format: str = "all",
+) -> None:
+    result, codebook, codebook_hash = score_input(input_dir, codebook_path, preferred_format)
     write_outputs(
         output_dir=output_dir,
         input_dir=input_dir,
@@ -131,7 +137,13 @@ def command_describe(args: argparse.Namespace) -> int:
 
 
 def command_score(args: argparse.Namespace) -> int:
-    run_score(args.input_dir, args.output_dir, args.codebook, " ".join(sys.argv))
+    run_score(
+        args.input_dir,
+        args.output_dir,
+        args.codebook,
+        " ".join(sys.argv),
+        args.preferred_format,
+    )
     print(f"Scoring complete. Outputs written to {args.output_dir}")
     print(DISCLAIMER)
     return 0
@@ -143,7 +155,10 @@ def command_demo(args: argparse.Namespace) -> int:
     input_dir = args.output_dir / "synthetic_input" / "Fictional_Aero_Demo"
     generate_demo_pdf(input_dir / "fictional_reporting_package.pdf")
     run_score(
-        args.output_dir / "synthetic_input", args.output_dir, args.codebook, " ".join(sys.argv)
+        args.output_dir / "synthetic_input",
+        args.output_dir,
+        args.codebook,
+        " ".join(sys.argv),
     )
     print(f"Demo complete. Synthetic fictional PDF and outputs written to {args.output_dir}")
     return 0
@@ -168,6 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
     score.add_argument("--input-dir", type=Path, required=True)
     score.add_argument("--output-dir", type=Path, required=True)
     score.add_argument("--codebook", type=Path, required=True)
+    score.add_argument("--preferred-format", choices=["all", "xhtml", "pdf"], default="all")
     score.set_defaults(func=command_score)
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", type=Path, required=True)

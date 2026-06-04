@@ -2,7 +2,7 @@ cff-version: 1.2.0
 title: "IFRS18-ORAS: Observable Reporting Alignment Scoring Pipeline"
 message: "If you use this software, please cite it using this placeholder citation and replace author details before publication."
 type: software
-repository-code: "https://github.com/PLACEHOLDER/ifrs18-oras"
+repository-code: "https://github.com/Animenio/ifrs18-oras"
 version: "0.1.0"
 date-released: "2026-06-03"
 authors:

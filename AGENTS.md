@@ -18,3 +18,18 @@ Rules:
 - Update documentation and tests whenever scoring behaviour, output fields, codebook semantics, or applicability logic changes.
 - Preserve backwards compatibility unless a versioned changelog entry documents the break and its comparability implications.
 - Run the full verification suite before completing future tasks.
+
+XHTML/ESEF hardening notes:
+- Native ESEF XHTML/HTML/Inline XBRL support uses the declared `lxml>=5.0,<7` runtime dependency; do not add a silent standard-library parser fallback for scoring.
+- XHTML/HTML inputs must not be converted to PDF and must not use OCR, LLMs, web requests, or hidden scoring logic.
+- PDF evidence uses page-number locators; XHTML/HTML evidence uses deterministic block indexes and XPath locators where available.
+- Company source discovery is recursive under each company folder and is restricted to `.pdf`, `.xhtml`, `.html`, and `.htm` files.
+- Duplicate source documents are excluded by SHA-256 within each company folder and recorded with `exclusion_reason=duplicate_sha256`.
+- The EU core-score recommendation is to run `score --preferred-format xhtml`; `all` remains the default for backwards-compatible mixed-package scoring.
+- Report main, supplementary D, and total evidence coverage separately; `evidence_coverage_pct` is a backwards-compatible alias for main coverage.
+
+Codebook maintenance notes:
+- Create a new versioned codebook file for score-affecting changes and preserve historical codebooks.
+- Add regression tests for every regex or applicability change.
+- Run lint, format-check, tests, current and historical codebook validation, demo, and inspect the final diff before completion.
+- Do not introduce hidden, probabilistic, or non-deterministic scoring logic.

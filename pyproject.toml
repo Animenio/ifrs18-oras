@@ -12,6 +12,7 @@ license = {text = "MIT"}
 authors = [{name = "Placeholder author - to be completed before release"}]
 dependencies = [
   "PyMuPDF>=1.24,<2",
+  "lxml>=5.0,<7",
 ]
 
 [project.optional-dependencies]

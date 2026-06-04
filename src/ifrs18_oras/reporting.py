@@ -14,7 +14,7 @@ from ifrs18_oras.models import Codebook, RunResult
 
 
 def package_versions() -> dict[str, str]:
-    packages = ["PyMuPDF"]
+    packages = ["PyMuPDF", "lxml"]
     versions: dict[str, str] = {}
     for package in packages:
         try:
@@ -60,8 +60,12 @@ def write_outputs(
     item_rows = [
         {key: none_to_na(value) for key, value in asdict(row).items()} for row in result.item_scores
     ]
-    evidence_rows = [asdict(row) for row in result.evidence]
-    manifest_rows = [asdict(row) for row in result.manifests]
+    evidence_rows = [
+        {key: none_to_na(value) for key, value in asdict(row).items()} for row in result.evidence
+    ]
+    manifest_rows = [
+        {key: none_to_na(value) for key, value in asdict(row).items()} for row in result.manifests
+    ]
 
     write_csv(output_dir / "company_scores.csv", company_rows, list(company_rows[0].keys()))
     (output_dir / "company_scores.json").write_text(
@@ -81,6 +85,14 @@ def write_outputs(
             "match_type",
             "regex_pattern",
             "page_number",
+            "source_format",
+            "source_locator_type",
+            "source_locator",
+            "block_index",
+            "xpath",
+            "context_block_start",
+            "context_block_end",
+            "context_locators",
             "matched_text",
             "contextual_snippet",
         ],
@@ -92,6 +104,11 @@ def write_outputs(
             "company",
             "document_filename",
             "sha256",
+            "source_format",
+            "mime_type",
+            "parser_backend",
+            "inline_xbrl_detected",
+            "block_count",
             "page_count",
             "extracted_character_count",
             "low_text_warning",
@@ -113,7 +130,14 @@ def write_outputs(
         "input_directory_path": str(input_dir),
         "output_directory_path": str(output_dir),
         "processed_companies": [row.company for row in result.company_scores],
-        "source_pdf_hashes": sorted({row.sha256 for row in result.manifests}),
+        "source_pdf_hashes": sorted(
+            {
+                row.sha256
+                for row in result.manifests
+                if row.document_filename.lower().endswith(".pdf")
+            }
+        ),
+        "source_document_hashes": sorted({row.sha256 for row in result.manifests}),
         "methodological_disclaimer": DISCLAIMER,
         "exact_command": command,
     }
@@ -138,7 +162,7 @@ def write_html_company(path: Path, company: str, result: RunResult, codebook_has
         "</head><body>",
         f"<h1>{html.escape(company)} IFRS18-ORAS audit trail</h1>",
         f"<p><strong>Disclaimer:</strong> {html.escape(DISCLAIMER)}</p>",
-        f"<p>Main score: {none_to_na(score.ifrs18_oras_0_100)}; adjustment gap: {none_to_na(score.reporting_adjustment_gap_0_100)}; evidence coverage: {none_to_na(score.evidence_coverage_pct)}%</p>",
+        f"<p>Main score: {none_to_na(score.ifrs18_oras_0_100)}; adjustment gap: {none_to_na(score.reporting_adjustment_gap_0_100)}; main evidence coverage: {none_to_na(score.main_evidence_coverage_pct)}%; supplementary D evidence coverage: {none_to_na(score.supplementary_D_evidence_coverage_pct)}%; total evidence coverage: {none_to_na(score.total_evidence_coverage_pct)}%</p>",
         f"<p>Company processing status: {html.escape(score.company_processing_status)}; usable documents: {score.usable_documents}; excluded documents: {score.excluded_documents}</p>",
         f"<p>Codebook SHA-256: {html.escape(codebook_hash)}</p>",
         "<h2>Source documents</h2><ul>",
@@ -152,7 +176,7 @@ def write_html_company(path: Path, company: str, result: RunResult, codebook_has
     )
     for dimension in dimensions:
         body.append(
-            f"<tr><td>{dimension.dimension_id}</td><td>{html.escape(dimension.dimension_label)}</td><td>{dimension.dimension_score}</td></tr>"
+            f"<tr><td>{dimension.dimension_id}</td><td>{html.escape(dimension.dimension_label)}</td><td>{none_to_na(dimension.dimension_score)}</td></tr>"
         )
     body.extend(
         [
@@ -161,17 +185,19 @@ def write_html_company(path: Path, company: str, result: RunResult, codebook_has
     )
     for item in items:
         body.append(
-            f"<tr><td>{item.item_id}</td><td>{html.escape(item.label)}</td><td>{item.applicable}</td><td>{item.score}</td><td>{item.evidence_count}</td></tr>"
+            f"<tr><td>{item.item_id}</td><td>{html.escape(item.label)}</td><td>{item.applicable}</td><td>{none_to_na(item.score)}</td><td>{item.evidence_count}</td></tr>"
         )
     body.extend(
         [
-            "</table><h2>Evidence</h2><table><tr><th>Item</th><th>Document</th><th>Page</th><th>Type</th><th>Pattern</th><th>Snippet</th></tr>"
+            "</table><h2>Evidence</h2><table><tr><th>Item</th><th>Document</th><th>Locator</th><th>Context locators</th><th>Type</th><th>Pattern</th><th>Snippet</th></tr>"
         ]
     )
     for row in evidence:
         body.append(
             "<tr>"
-            f"<td>{row.item_id}</td><td>{html.escape(row.document_filename)}</td><td>{row.page_number}</td>"
+            f"<td>{row.item_id}</td><td>{html.escape(row.document_filename)}</td>"
+            f"<td>{html.escape(row.source_locator_type)}: {html.escape(str(row.source_locator or none_to_na(row.page_number)))}</td>"
+            f"<td>{html.escape(str(none_to_na(row.context_locators)))}</td>"
             f"<td>{row.match_type}</td><td><code>{html.escape(row.regex_pattern)}</code></td>"
             f"<td>{html.escape(row.contextual_snippet)}</td></tr>"
         )
