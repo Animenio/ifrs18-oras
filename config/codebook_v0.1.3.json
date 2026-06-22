@@ -1,0 +1,697 @@
+{
+  "name": "IFRS18-ORAS provisional codebook",
+  "version": "0.1.3-provisional",
+  "status": "provisional_pending_accounting_review",
+  "methodology_note": "Provisional codebook for observable documentary alignment screening only. Final accounting interpretation of individual scoring items requires accounting-specialist review before empirical deployment.\n",
+  "triggers": {
+    "mpm_candidate": [
+      "\\badjusted\\s+EBIT(?:DA)?\\b",
+      "\\badjusted\\s+operating\\s+profit\\b",
+      "\\bunderlying\\s+(?:EBIT|earnings)\\b",
+      "\\brecurring\\s+operating\\s+profit\\b",
+      "\\balternative\\s+performance\\s+measure\\b",
+      "\\balternative\\s+performance\\s+measures\\b",
+      "\\balternative\\s+performance\\s+indicators?\\b",
+      "\\bAPM\\b",
+      "\\bnon-GAAP\\b",
+      "\\bnon-GAAP\\s+financial\\s+measures?\\b",
+      "\\bmanagement-defined\\s+performance\\s+measures?\\b",
+      "\\bMPM\\b",
+      "\\bEBIT\\s+Adjusted\\b",
+      "\\bEBITA\\b",
+      "\\badjusted\\s+net\\s+result\\b",
+      "\\breclassified\\s+income\\s+statement\\b",
+      "\\badjusted\\s+income\\s+statement\\b",
+      "\\bconsolidated\\s+income\\s+statement\\s+and\\s+adjusted\\s+income\\s+statement\\b",
+      "\\bdefinition\\s+of\\s+management-defined\\s+performance\\s+measures?\\b",
+      "\\badjusted\\s+data\\b[\\s\\S]{0,80}\\b(?:adjusted\\s+income\\s+statement|management-defined\\s+performance\\s+measures?|MPMs?|alternative\\s+performance\\s+measures?|non-GAAP)\\b",
+      "\\b(?:adjusted\\s+income\\s+statement|management-defined\\s+performance\\s+measures?|MPMs?|alternative\\s+performance\\s+measures?|non-GAAP)\\b[\\s\\S]{0,80}\\badjusted\\s+data\\b"
+    ],
+    "discontinued_operations": [
+      "\\bdiscontinued\\s+operations?\\b",
+      "\\battivit[àa]\\s+operative\\s+cessate\\b"
+    ],
+    "equity_method": [
+      "\\bequity\\s+method\\b",
+      "\\bassociates?\\b",
+      "\\bjoint\\s+ventures?\\b",
+      "\\bmetodo\\s+del\\s+patrimonio\\s+netto\\b",
+      "\\bpartecipazioni\\s+valutate\\s+con\\s+il\\s+metodo\\s+del\\s+patrimonio\\s+netto\\b"
+    ],
+    "function_expenses": [
+      "\\bexpenses?\\s+by\\s+function\\b",
+      "\\bfunction\\s+of\\s+expense\\b",
+      "\\bcost\\s+of\\s+sales\\b",
+      "\\bcosto\\s+del\\s+venduto\\b",
+      "\\bcosti\\s+per\\s+funzione\\b"
+    ]
+  },
+  "dimensions": [
+    {
+      "id": "A",
+      "label": "Profit-or-loss architecture",
+      "main_score_weight": 40,
+      "supplementary": false,
+      "items": [
+        {
+          "id": "A1",
+          "label": "Operating profit or loss subtotal is observable",
+          "weight": 9,
+          "ifrs_reference": "IFRS 18.69(a)-70",
+          "applicability_rule": "always",
+          "explanatory_note": "EBIT alone is weak because composition is not automatically equivalent to IFRS 18 subtotals.",
+          "patterns": {
+            "strong": [
+              "\\boperating\\s+(?:profit|loss|income)\\b",
+              "\\bprofit\\s+from\\s+operations\\b",
+              "\\brisultato\\s+operativo\\b",
+              "\\butile\\s+operativo\\b"
+            ],
+            "weak": [
+              "\\bEBIT\\b"
+            ]
+          }
+        },
+        {
+          "id": "A2",
+          "label": "Profit or loss before financing and income taxes subtotal is observable",
+          "weight": 9,
+          "ifrs_reference": "IFRS 18.69(b), 71",
+          "applicability_rule": "always",
+          "explanatory_note": "EBIT alone is weak because composition is not automatically equivalent to IFRS 18 subtotals.",
+          "patterns": {
+            "strong": [
+              "\\bprofit\\s+(?:or\\s+loss\\s+)?before\\s+financing\\s+and\\s+income\\s+tax(?:es)?\\b",
+              "\\brisultato\\s+prima\\s+degli\\s+oneri\\s+finanziari\\s+e\\s+delle\\s+imposte\\b"
+            ],
+            "weak": [
+              "\\bEBIT\\b"
+            ]
+          }
+        },
+        {
+          "id": "A3",
+          "label": "Operating, investing and financing categories are traceable",
+          "weight": 8,
+          "ifrs_reference": "IFRS 18.47-68",
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\boperating\\s+category\\b[\\s\\S]{0,160}\\binvesting\\s+category\\b[\\s\\S]{0,160}\\bfinancing\\s+category\\b",
+              "\\bcategoria\\s+operativa\\b[\\s\\S]{0,160}\\bcategoria\\s+di\\s+investimento\\b[\\s\\S]{0,160}\\bcategoria\\s+finanziaria\\b"
+            ],
+            "weak": [
+              "\\boperating\\b[\\s\\S]{0,120}\\binvesting\\b[\\s\\S]{0,120}\\bfinancing\\b"
+            ]
+          }
+        },
+        {
+          "id": "A4",
+          "label": "Income-tax expense or income is separately observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.67, 75(a)(iv)",
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bincome\\s+tax\\s+(?:expense|income)\\b",
+              "\\bimposte\\s+sul\\s+reddito\\b"
+            ],
+            "weak": [
+              "\\btax\\s+(?:expense|income)\\b"
+            ]
+          }
+        },
+        {
+          "id": "A5",
+          "label": "Discontinued operations are separately observable when relevant",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.68, 75(a)(v)",
+          "applicability_rule": "requires_discontinued_operations",
+          "patterns": {
+            "strong": [
+              "\\bdiscontinued\\s+operations?\\b",
+              "\\battivit[àa]\\s+operative\\s+cessate\\b"
+            ],
+            "weak": [
+              "\\bheld\\s+for\\s+sale\\b"
+            ]
+          }
+        },
+        {
+          "id": "A6",
+          "label": "Equity-method associates and joint ventures result is separately observable when relevant",
+          "weight": 4,
+          "ifrs_reference": "IFRS 18.53(a), 55, 75(a)(iii)",
+          "applicability_rule": "requires_equity_method",
+          "patterns": {
+            "strong": [
+              "\\b(?:result|share\\s+of\\s+profit|share\\s+of\\s+loss)\\s+of\\s+(?:equity[- ]method\\s+)?(?:associates?|joint\\s+ventures?)\\b",
+              "\\bmetodo\\s+del\\s+patrimonio\\s+netto\\b"
+            ],
+            "weak": [
+              "\\bassociate[s]?\\b",
+              "\\bjoint\\s+venture[s]?\\b"
+            ]
+          }
+        },
+        {
+          "id": "A7",
+          "label": "Finance income or costs are separately observable",
+          "weight": 4,
+          "ifrs_reference": "IFRS 18.59-66",
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bfinance\\s+(?:income|costs?|expenses?)\\b",
+              "\\bproventi\\s+finanziari\\b",
+              "\\boneri\\s+finanziari\\b"
+            ],
+            "weak": [
+              "\\binterest\\s+(?:income|expense)\\b"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "label": "MPM-candidate disclosure alignment",
+      "main_score_weight": 25,
+      "supplementary": false,
+      "items": [
+        {
+          "id": "B1",
+          "label": "Potential MPM/APM measure has a clear label",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.117, 123",
+          "applicability_rule": "requires_mpm_candidate",
+          "explanatory_note": "The software detects only potential MPM candidates, not legal IFRS 18 MPM status.",
+          "patterns": {
+            "strong": [
+              "\\badjusted\\s+EBIT(?:DA)?\\b",
+              "\\balternative\\s+performance\\s+measure(?:s)?\\b",
+              "\\balternative\\s+performance\\s+indicators?\\b",
+              "\\bAPM\\b",
+              "\\bunderlying\\s+earnings\\b",
+              "\\bmanagement-defined\\s+performance\\s+measures?\\b",
+              "\\badjusted\\s+income\\s+statement\\b",
+              "\\bEBIT\\s+Adjusted\\b",
+              "\\bEBITA\\b",
+              "\\badjusted\\s+net\\s+result\\b",
+              "\\breclassified\\s+income\\s+statement\\b"
+            ],
+            "weak": [
+              "\\bMPM\\b",
+              "\\bnon-GAAP\\b",
+              "\\badjusted\\s+data\\b[\\s\\S]{0,80}\\b(?:adjusted\\s+income\\s+statement|management-defined\\s+performance\\s+measures?|MPMs?)\\b",
+              "\\b(?:adjusted\\s+income\\s+statement|management-defined\\s+performance\\s+measures?|MPMs?)\\b[\\s\\S]{0,80}\\badjusted\\s+data\\b"
+            ]
+          }
+        },
+        {
+          "id": "B2",
+          "label": "Usefulness or management-view explanation is observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.121, 123(a)",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|reclassified\\s+income\\s+statement|EBIT\\s+Adjusted|EBITA)\\b[\\s\\S]{0,60}\\bused\\s+by\\s+management\\b[\\s\\S]{0,80}\\b(?:assess|evaluate)\\b[\\s\\S]{0,80}\\b(?:operating\\s+)?performance\\b",
+              "\\bmanagement[\\\\'?]?s\\s+view\\b[\\s\\S]{0,120}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|reclassified\\s+income\\s+statement|EBIT\\s+Adjusted|EBITA)\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|reclassified\\s+income\\s+statement|EBIT\\s+Adjusted|EBITA)\\b[\\s\\S]{0,120}\\bmanagement[\\\\'?]?s\\s+view\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|reclassified\\s+income\\s+statement|EBIT\\s+Adjusted|EBITA)\\b[\\s\\S]{0,120}\\bprovides\\s+(?:useful|relevant)\\s+information\\b",
+              "\\bprovides\\s+(?:useful|relevant)\\s+information\\b[\\s\\S]{0,120}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|reclassified\\s+income\\s+statement|EBIT\\s+Adjusted|EBITA)\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "B3",
+          "label": "Calculation method is observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.123(b)",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\bROS\\s+calculated\\s+as\\s+EBITA\\s+to\\s+revenue\\b",
+              "\\bROI\\s+calculated\\s+as\\s+EBITA\\s+to\\s+(?:average\\s+)?net\\s+capital\\s+invested\\b",
+              "\\b(?:FFO|Net\\s+interest)\\b[\\s\\S]{0,80}\\bdefinition(?:s)?\\b",
+              "\\b(?:calculation\\s+method|calculated\\s+as|starts?\\s+from|definition(?:s)?(?:\\s+of)?|defined\\s+as)\\b[\\s\\S]{0,120}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b[\\s\\S]{0,120}\\b(?:calculation\\s+method|calculated\\s+as|starts?\\s+from|definition(?:s)?(?:\\s+of)?|defined\\s+as)\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "B4",
+          "label": "Reconciliation to an IFRS subtotal is observable",
+          "weight": 5,
+          "ifrs_reference": "IFRS 18.123(c)",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\breconciliation\\s+between\\s+reclassified\\s+income\\s+statement\\s+and\\s+statutory\\s+income\\s+statement\\b",
+              "\\breconciliation\\s+of\\s+Income\\s+before\\s+tax\\s+and\\s+financial\\s+expense,\\s+EBIT\\s+and\\s+EBITA\\b",
+              "\\breconciliation\\s+to\\s+(?:IFRS\\s+)?(?:operating\\s+profit|profit)\\b",
+              "\\breconciled\\s+to\\s+(?:IFRS\\s+)?(?:subtotal|measure)\\b",
+              "\\breconciliation\\b[\\s\\S]{0,120}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b[\\s\\S]{0,120}\\breconciliation\\b"
+            ],
+            "weak": [
+              "\\breconciled?\\b[\\s\\S]{0,80}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b[\\s\\S]{0,80}\\breconciled?\\b"
+            ]
+          }
+        },
+        {
+          "id": "B5",
+          "label": "Reconciling items are disaggregated",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.123(c), B136-B140",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\breconciling\\s+items\\s+are\\s+disaggregated\\b",
+              "\\bdisaggregated\\s+between\\b"
+            ],
+            "weak": [
+              "\\breconciling\\s+items\\b"
+            ]
+          }
+        },
+        {
+          "id": "B6",
+          "label": "Tax effect of reconciling items is observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.123(d)-(e)",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\btax\\s+effect\\s+on\\s+non-cash\\s+elements\\s+in\\s+adjusted\\s+net\\s+result\\s+reconciliation\\b",
+              "\\btax\\s+effect\\s+of\\s+reconciling\\s+items\\b",
+              "\\btax\\s+effect\\b[\\s\\S]{0,120}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b[\\s\\S]{0,120}\\btax\\s+effect\\b"
+            ],
+            "weak": [
+              "\\btax\\s+impact\\b[\\s\\S]{0,80}\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b",
+              "\\b(?:APM|MPM|non-GAAP|alternative\\s+performance\\s+(?:measure|measures|indicator|indicators)|management-defined\\s+performance\\s+measures?|adjusted\\s+(?:result|income\\s+statement|data|net\\s+result)|EBIT\\s+Adjusted|EBITA|reclassified\\s+income\\s+statement)\\b[\\s\\S]{0,80}\\btax\\s+impact\\b"
+            ]
+          }
+        },
+        {
+          "id": "B7",
+          "label": "Non-controlling-interest effect is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.123(d)",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\bnon[- ]controlling\\s+interest\\s+effect\\s+of\\s+reconciling\\s+items\\s+in\\s+adjusted\\s+net\\s+result\\b",
+              "\\b(?:non[- ]controlling\\s+interest|NCI)\\s+effect\\b[\\s\\S]{0,100}\\b(?:reconciling\\s+items|adjusted\\s+net\\s+result(?:\\s+reconciliation)?)\\b",
+              "\\b(?:reconciling\\s+items|adjusted\\s+net\\s+result(?:\\s+reconciliation)?)\\b[\\s\\S]{0,100}\\b(?:non[- ]controlling\\s+interest|NCI)\\s+effect\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "B8",
+          "label": "Changes, additions or cessations of measures and comparative information are observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.124-125",
+          "applicability_rule": "requires_mpm_candidate",
+          "patterns": {
+            "strong": [
+              "\\bchanges\\s+in\\s+measures\\b[\\s\\S]{0,120}\\bcomparative\\s+information\\b",
+              "\\badditions?\\s+or\\s+cessations?\\s+of\\s+measures\\b",
+              "\\bchanges?\\s+in\\s+(?:measures?|APMs?|MPMs?)\\b",
+              "\\bcomparative\\s+information\\b[\\s\\S]{0,120}\\b(?:changes?|additions?|cessations?)\\b[\\s\\S]{0,80}\\b(?:measures?|APMs?|MPMs?|adjusted\\s+net\\s+result|reclassified\\s+income\\s+statement)\\b",
+              "\\b(?:changes?|additions?|cessations?)\\b[\\s\\S]{0,80}\\bcomparative\\s+information\\b[\\s\\S]{0,80}\\b(?:measures?|APMs?|MPMs?|adjusted\\s+net\\s+result|reclassified\\s+income\\s+statement)\\b"
+            ],
+            "weak": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "label": "Aggregation, disaggregation and expense disclosure",
+      "main_score_weight": 25,
+      "supplementary": false,
+      "items": [
+        {
+          "id": "C1",
+          "label": "Cross-references between line items and notes are observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.114",
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bnote\\s+\\d+\\s+cross[- ]references?\\b",
+              "\\bline\\s+items?\\b[\\s\\S]{0,80}\\bnotes?\\b"
+            ],
+            "weak": [
+              "\\bsee\\s+note\\s+\\d+\\b"
+            ]
+          }
+        },
+        {
+          "id": "C2",
+          "label": "Specific explanations of material-looking other items are observable",
+          "weight": 4,
+          "ifrs_reference": "IFRS 18.43, B24-B26",
+          "applicability_rule": "always",
+          "explanatory_note": "The software does not infer IFRS materiality; this is only a research screening signal.",
+          "patterns": {
+            "strong": [
+              "\\bother\\s+(?:expenses|income|items)\\s+include\\b",
+              "\\baltri\\s+(?:costi|ricavi)\\s+includono\\b"
+            ],
+            "weak": [
+              "\\bother\\s+(?:expenses|income|items)\\b"
+            ]
+          }
+        },
+        {
+          "id": "C3",
+          "label": "Expense presentation basis is identifiable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.78-81",
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bexpenses?\\s+by\\s+(?:function|nature)\\b",
+              "\\bpresents\\s+expenses?\\s+by\\s+function\\b",
+              "\\bcosti\\s+per\\s+(?:funzione|natura)\\b"
+            ],
+            "weak": [
+              "\\bfunction\\s+line\\s+items\\b"
+            ]
+          }
+        },
+        {
+          "id": "C4",
+          "label": "Cost of sales is separately observable when function presentation is detected",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.82(a)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\bcost\\s+of\\s+sales\\b",
+              "\\bcosto\\s+del\\s+venduto\\b"
+            ],
+            "weak": [
+              "\\bcost\\s+of\\s+goods\\s+sold\\b"
+            ]
+          }
+        },
+        {
+          "id": "C5",
+          "label": "Qualitative description of the nature of expenses included in function line items is observable",
+          "weight": 3,
+          "ifrs_reference": "IFRS 18.82(b)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\bnature\\s+of\\s+expenses\\s+included\\s+in\\s+function\\s+line\\s+items\\b"
+            ],
+            "weak": [
+              "\\bnature\\s+of\\s+expenses\\b"
+            ]
+          }
+        },
+        {
+          "id": "C6",
+          "label": "Depreciation total is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.83(a)(i)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\bdepreciation\\b",
+              "\\bammortamento\\s+materiale\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "C7",
+          "label": "Amortisation total is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.83(a)(ii)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\bamorti[sz]ation\\b",
+              "\\bammortamento\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "C8",
+          "label": "Employee-benefits total is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.83(a)(iii)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\bemployee\\s+benefits?\\b",
+              "\\bbenefici\\s+ai\\s+dipendenti\\b"
+            ],
+            "weak": [
+              "\\bstaff\\s+costs?\\b"
+            ]
+          }
+        },
+        {
+          "id": "C9",
+          "label": "Impairment losses and reversals total is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.83(a)(iv)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\bimpairment\\s+losses?(?:\\s+and\\s+reversals?)?\\b",
+              "\\bperdite\\s+di\\s+valore\\b"
+            ],
+            "weak": [
+              "\\bimpairment\\b"
+            ]
+          }
+        },
+        {
+          "id": "C10",
+          "label": "Inventory write-downs and reversals total is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.83(a)(v)",
+          "applicability_rule": "requires_function_expenses",
+          "patterns": {
+            "strong": [
+              "\\binventory\\s+write[- ]downs?(?:\\s+and\\s+reversals?)?\\b",
+              "\\bsvalutazioni\\s+delle\\s+rimanenze\\b"
+            ],
+            "weak": [
+              "\\bwrite[- ]downs?\\b"
+            ]
+          }
+        },
+        {
+          "id": "C11",
+          "label": "Material-disaggregation language is observable",
+          "weight": 2,
+          "ifrs_reference": "IFRS 18.41-43",
+          "applicability_rule": "always",
+          "explanatory_note": "No IFRS materiality conclusion is inferred.",
+          "patterns": {
+            "strong": [
+              "\\baggregation\\s+and\\s+disaggregation\\b",
+              "\\bmaterial\\s+disaggregation\\b",
+              "\\baggregazione\\s+e\\s+disaggregazione\\b"
+            ],
+            "weak": [
+              "\\bdisaggregation\\b"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "label": "Transition transparency",
+      "main_score_weight": 10,
+      "supplementary": false,
+      "items": [
+        {
+          "id": "E1",
+          "label": "IFRS 18 is mentioned",
+          "weight": 2,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bIFRS\\s*18\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "E2",
+          "label": "Effective date or planned adoption timing is observable",
+          "weight": 2,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bplanned\\s+adoption\\b[\\s\\S]{0,120}\\bIFRS\\s*18\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,120}\\bplanned\\s+adoption\\b",
+              "\\badozione\\s+prevista\\b[\\s\\S]{0,120}\\bIFRS\\s*18\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,120}\\badozione\\s+prevista\\b",
+              "\\beffective\\s+date\\b[\\s\\S]{0,140}\\b(?:IFRS\\s*18|IASB|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|IASB|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,140}\\beffective\\s+date\\b",
+              "\\bannual\\s+(?:reporting\\s+)?periods?\\s+beginning\\b[\\s\\S]{0,160}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,160}\\bannual\\s+(?:reporting\\s+)?periods?\\s+beginning\\b",
+              "\\b(?:1\\s+January\\s+2027|January\\s+1,?\\s+2027)\\b[\\s\\S]{0,160}\\bIFRS\\s*18\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,160}\\b(?:1\\s+January\\s+2027|January\\s+1,?\\s+2027)\\b",
+              "\\bearly\\s+application\\b[\\s\\S]{0,140}\\bIFRS\\s*18\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,140}\\bearly\\s+application\\b",
+              "\\b(?:EU\\s+endorsement|EU\\s+adoption|endorsement\\s+in\\s+the\\s+European\\s+Union)\\b[\\s\\S]{0,160}\\bIFRS\\s*18\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,160}\\b(?:EU\\s+endorsement|EU\\s+adoption|endorsement\\s+in\\s+the\\s+European\\s+Union)\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "E3",
+          "label": "Impact assessment or implementation project is observable",
+          "weight": 2,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\b(?:assessing|evaluating|analysing|analyzing)\\s+the\\s+impact\\s+of\\s+IFRS\\s*18\\b",
+              "\\bcontinued\\s+to\\s+assess\\s+the\\s+impact\\s+of\\s+the\\s+application\\s+of\\s+IFRS\\s*18\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|application\\s+of\\s+IFRS\\s*18)\\b[\\s\\S]{0,140}\\banalysing\\s+the\\s+potential\\s+impacts?\\s+of\\s+this\\s+new\\s+standard\\b[\\s\\S]{0,80}\\bfinancial\\s+statements?\\b",
+              "\\bpreliminary\\s+assessment\\s+of\\s+the\\s+impacts?\\s+associated\\s+with\\s+IFRS\\s*18\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|application\\s+of\\s+IFRS\\s*18)\\b[\\s\\S]{0,140}\\bpreliminary\\s+assessment\\s+of\\s+the\\s+impacts?\\s+associated\\s+with\\s+adopting\\s+the\\s+new\\s+standard\\b",
+              "\\bimpact\\s+assessment\\b[\\s\\S]{0,120}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|application\\s+of\\s+IFRS\\s*18)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|application\\s+of\\s+IFRS\\s*18)\\b[\\s\\S]{0,120}\\bimpact\\s+assessment\\b",
+              "\\bimplementation\\s+(?:project|programme|program|work)\\b[\\s\\S]{0,140}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|application\\s+of\\s+IFRS\\s*18)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|application\\s+of\\s+IFRS\\s*18)\\b[\\s\\S]{0,140}\\b(?:implementation\\s+(?:project|programme|program|work)|process(?:es)?|systems?)\\b"
+            ],
+            "weak": []
+          }
+        },
+        {
+          "id": "E4",
+          "label": "Affected reporting areas are qualitatively described",
+          "weight": 2,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\baffected\\s+reporting\\s+areas\\b",
+              "\\bsubtotals\\b[\\s\\S]{0,120}\\bnote\\s+disclosures\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,200}\\blays?\\s+down\\s+new\\s+requirements?\\s+for\\s+the\\s+presentation\\s+of\\s+the\\s+income\\s+statement,?\\s+management-defined\\s+performance\\s+measures,?\\s+aggregation\\s+and\\s+disaggregation\\b",
+              "\\b(?:IFRS\\s*18|new\\s+standard)\\b[\\s\\S]{0,180}\\bstructure\\s+of\\s+the\\s+income\\s+statement\\b[\\s\\S]{0,120}\\bdefinition\\s+of\\s+management-defined\\s+performance\\s+measures\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,180}\\bpresentation\\b[\\s\\S]{0,120}\\bincome\\s+statement\\b[\\s\\S]{0,120}\\bmanagement-defined\\s+performance\\s+measures\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,180}\\baggregation\\s+and\\s+disaggregation\\s+of\\s+financial\\s+information\\b",
+              "\\bIFRS\\s*18\\b[\\s\\S]{0,160}\\b(?:concerns?|affects?)\\b[\\s\\S]{0,160}\\b(?:presentation|aggregation|disaggregation|subtotals|management-defined\\s+performance\\s+measures|MPM)\\b",
+              "\\b(?:impact|effects?)\\s+of\\s+IFRS\\s*18\\b[\\s\\S]{0,160}\\b(?:presentation|aggregation|disaggregation|subtotals|management-defined\\s+performance\\s+measures|MPM)\\b"
+            ],
+            "weak": [
+              "\\breporting\\s+areas\\b"
+            ]
+          }
+        },
+        {
+          "id": "E5",
+          "label": "Expected qualitative or quantitative effects are disclosed",
+          "weight": 2,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bexpected\\s+(?:qualitative|quantitative)\\s+effects?\\b",
+              "\\bexpected\\s+effects?\\s+are\\s+disclosed\\b"
+            ],
+            "weak": [
+              "\\bexpected\\s+effects?\\b"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "label": "IAS 7 consequential changes",
+      "supplementary": true,
+      "items": [
+        {
+          "id": "D1",
+          "label": "Indirect cash-flow reconciliation starts from operating profit",
+          "weight": 1,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bindirect\\s+cash[- ]flow\\s+reconciliation\\s+starts\\s+from\\s+operating\\s+profit\\b"
+            ],
+            "weak": [
+              "\\bcash[- ]flow\\s+reconciliation\\b"
+            ]
+          }
+        },
+        {
+          "id": "D2",
+          "label": "Interest received classified as investing",
+          "weight": 1,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\binterest\\s+received\\s+classified\\s+as\\s+investing\\b"
+            ],
+            "weak": [
+              "\\binterest\\s+received\\b"
+            ]
+          }
+        },
+        {
+          "id": "D3",
+          "label": "Interest paid classified as financing",
+          "weight": 1,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\binterest\\s+paid\\s+classified\\s+as\\s+financing\\b"
+            ],
+            "weak": [
+              "\\binterest\\s+paid\\b"
+            ]
+          }
+        },
+        {
+          "id": "D4",
+          "label": "Dividends received classified as investing",
+          "weight": 1,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bdividends\\s+received\\s+classified\\s+as\\s+investing\\b"
+            ],
+            "weak": [
+              "\\bdividends\\s+received\\b"
+            ]
+          }
+        },
+        {
+          "id": "D5",
+          "label": "Dividends paid classified as financing",
+          "weight": 1,
+          "applicability_rule": "always",
+          "patterns": {
+            "strong": [
+              "\\bdividends\\s+paid\\s+classified\\s+as\\s+financing\\b"
+            ],
+            "weak": [
+              "\\bdividends\\s+paid\\b"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
