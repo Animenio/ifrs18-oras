@@ -571,7 +571,8 @@
             "strong": [
               "\\b(?:assessing|evaluating|analysing|analyzing)\\s+the\\s+impact\\s+of\\s+IFRS\\s*18\\b",
               "\\bcontinued\\s+to\\s+assess\\s+the\\s+impact\\s+of\\s+the\\s+application\\s+of\\s+IFRS\\s*18\\b",
-              "\\banalysing\\s+the\\s+potential\\s+impacts?\\s+of\\s+this\\s+new\\s+standard\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,140}\\banalysing\\s+the\\s+potential\\s+impacts?\\s+of\\s+this\\s+new\\s+standard\\b",
+              "\\banalysing\\s+the\\s+potential\\s+impacts?\\s+of\\s+this\\s+new\\s+standard\\b[\\s\\S]{0,140}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|financial\\s+statements?)\\b",
               "\\bpreliminary\\s+assessment\\s+of\\s+the\\s+impacts?\\s+associated\\s+with\\s+IFRS\\s*18\\b",
               "\\bimpact\\s+assessment\\b[\\s\\S]{0,120}\\b(?:IFRS\\s*18|new\\s+standard|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|financial\\s+statements?|implementation|potential\\s+impacts?)\\b",
               "\\b(?:IFRS\\s*18|new\\s+standard|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|financial\\s+statements?|implementation|potential\\s+impacts?)\\b[\\s\\S]{0,120}\\bimpact\\s+assessment\\b",
