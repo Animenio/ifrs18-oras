@@ -14,6 +14,7 @@ from ifrs18_oras.scoring import is_applicable, score_company
 
 CODEBOOK = Path("config/codebook_v0.1.1.json")
 OLD_CODEBOOK = Path("config/codebook_v0.1.0.json")
+NEW_CODEBOOK = Path("config/codebook_v0.1.2.json")
 
 
 def test_text_normalisation() -> None:
@@ -108,6 +109,12 @@ def test_historical_codebook_v0_1_0_still_validates() -> None:
     assert len(digest) == 64
 
 
+def test_revised_codebook_v0_1_2_validates() -> None:
+    codebook, digest = load_codebook(NEW_CODEBOOK)
+    assert codebook.version == "0.1.2-provisional"
+    assert len(digest) == 64
+
+
 def test_adjusted_ebit_regex_and_mpm_applicability() -> None:
     codebook, _ = load_codebook(CODEBOOK)
     for text in ["Adjusted EBIT", "Adjusted EBITDA"]:
@@ -129,8 +136,8 @@ def test_adjusted_ebit_regex_and_mpm_applicability() -> None:
     )
 
 
-def item_score_for_text(item_id: str, text: str) -> float | None:
-    codebook, _ = load_codebook(CODEBOOK)
+def item_score_for_text(item_id: str, text: str, codebook_path: Path = CODEBOOK) -> float | None:
+    codebook, _ = load_codebook(codebook_path)
     result = score_company("C", [PageText("x.pdf", "h", 1, text)], [], codebook)
     return next(row for row in result.item_scores if row.item_id == item_id).score
 
@@ -180,6 +187,148 @@ def test_e4_affected_reporting_area_patterns() -> None:
         )
         == 0.0
     )
+
+
+def test_e2_patterns_are_ifrs18_specific_in_v0_1_2() -> None:
+    assert (
+        item_score_for_text(
+            "E2",
+            "IFRS 18 is effective for annual periods beginning on or after 1 January 2027.",
+            NEW_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E2",
+            "The company continues the adoption of digital tools and best practices across plants.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E2",
+            "The Annual General Meeting approved the adoption of the remuneration policy.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E2",
+            "The effective date of the climate initiative was updated for operational reasons.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_e3_patterns_are_ifrs18_specific_in_v0_1_2() -> None:
+    assert (
+        item_score_for_text(
+            "E3",
+            "The Group continued to assess the impact of the application of IFRS 18.",
+            NEW_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "Management is analysing the potential impacts of this new standard on the presentation of the financial statements.",
+            NEW_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The Human Rights Impact Assessment was updated for the supply chain programme.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The environmental impact assessment and climate risk assessment remain in progress.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The litigation assessment and assessment of post-employment benefits were reviewed.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_b_context_patterns_require_local_apm_context_in_v0_1_2() -> None:
+    assert (
+        item_score_for_text(
+            "B3",
+            "Alternative Performance Measures note: ROS calculated as EBITA to revenue.",
+            NEW_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B4",
+            "Non-GAAP Alternative Performance Indicators include a reconciliation between reclassified income statement and statutory income statement.",
+            NEW_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B6",
+            "Adjusted Net Result reconciliation discloses the tax effect on non-cash elements.",
+            NEW_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B3",
+            "Alternative Performance Measures are discussed. The sustainability methodology covers biodiversity and LCA topics.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures are defined. Non-controlling interests are presented within equity and the cash-flow statement.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B8",
+            "Alternative Performance Measures are defined. Comparative information is provided for workforce and sustainability disclosures.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_safran_style_b_signals_trigger_in_v0_1_2() -> None:
+    codebook, _ = load_codebook(NEW_CODEBOOK)
+    text = (
+        "The Group provides the definition of management-defined performance measures (MPMs) "
+        "and presents the consolidated income statement and adjusted income statement with adjusted data."
+    )
+    result = score_company("C", [PageText("x.pdf", "h", 1, text)], [], codebook)
+    score = result.company_scores[0]
+    items = {row.item_id: row for row in result.item_scores}
+    assert score.mpm_candidate_detected
+    assert items["B1"].score == 1.0
 
 
 def test_conditional_applicability() -> None:

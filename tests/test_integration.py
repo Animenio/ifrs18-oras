@@ -15,6 +15,7 @@ from ifrs18_oras.reporting import package_versions
 
 CODEBOOK = "config/codebook_v0.1.1.json"
 OLD_CODEBOOK = "config/codebook_v0.1.0.json"
+NEW_CODEBOOK = "config/codebook_v0.1.2.json"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 
@@ -66,6 +67,12 @@ def test_current_codebook_cli_validation() -> None:
     result = run_cli("validate-codebook", "--codebook", CODEBOOK)
     assert result.returncode == 0, result.stderr
     assert "version=0.1.1-provisional" in result.stdout
+
+
+def test_revised_codebook_cli_validation() -> None:
+    result = run_cli("validate-codebook", "--codebook", NEW_CODEBOOK)
+    assert result.returncode == 0, result.stderr
+    assert "version=0.1.2-provisional" in result.stdout
 
 
 def test_no_local_dependency_shadowing() -> None:
@@ -190,6 +197,33 @@ def test_four_fictional_fixture_golden_outputs(tmp_path: Path) -> None:
     assert manifest_rows["Fictional_Low_Text_PDF"]["scoring_eligible"] == "False"
     assert manifest_rows["Fictional_Low_Text_PDF"]["exclusion_reason"] == "no_extractable_text"
     assert (out / "html_reports" / "Fictional_High_Alignment.html").exists()
+
+
+def test_new_codebook_preserves_output_schema(tmp_path: Path) -> None:
+    input_root = tmp_path / "fixtures"
+    generate_fictional_fixture_input(input_root)
+    out = tmp_path / "out"
+    result = run_cli(
+        "score",
+        "--input-dir",
+        str(input_root),
+        "--output-dir",
+        str(out),
+        "--codebook",
+        NEW_CODEBOOK,
+    )
+    assert result.returncode == 0, result.stderr
+    company_row = read_rows(out / "company_scores.csv")[0]
+    dimension_row = read_rows(out / "dimension_scores.csv")[0]
+    item_row = read_rows(out / "item_scores.csv")[0]
+    evidence_row = read_rows(out / "evidence_log.csv")[0]
+    manifest_row = read_rows(out / "extraction_manifest.csv")[0]
+    assert "company" in company_row
+    assert "dimension_B_mpm_candidate" in company_row
+    assert "dimension_id" in dimension_row
+    assert "item_id" in item_row
+    assert "regex_pattern" in evidence_row
+    assert "document_filename" in manifest_row
 
 
 def test_repeated_outputs_are_deterministic(tmp_path: Path) -> None:
