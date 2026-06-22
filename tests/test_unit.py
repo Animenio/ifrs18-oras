@@ -15,6 +15,7 @@ from ifrs18_oras.scoring import is_applicable, score_company
 CODEBOOK = Path("config/codebook_v0.1.1.json")
 OLD_CODEBOOK = Path("config/codebook_v0.1.0.json")
 NEW_CODEBOOK = Path("config/codebook_v0.1.2.json")
+LATEST_CODEBOOK = Path("config/codebook_v0.1.3.json")
 
 
 def test_text_normalisation() -> None:
@@ -112,6 +113,12 @@ def test_historical_codebook_v0_1_0_still_validates() -> None:
 def test_revised_codebook_v0_1_2_validates() -> None:
     codebook, digest = load_codebook(NEW_CODEBOOK)
     assert codebook.version == "0.1.2-provisional"
+    assert len(digest) == 64
+
+
+def test_revised_codebook_v0_1_3_validates() -> None:
+    codebook, digest = load_codebook(LATEST_CODEBOOK)
+    assert codebook.version == "0.1.3-provisional"
     assert len(digest) == 64
 
 
@@ -345,6 +352,178 @@ def test_safran_style_b_signals_trigger_in_v0_1_2() -> None:
     items = {row.item_id: row for row in result.item_scores}
     assert score.mpm_candidate_detected
     assert items["B1"].score == 1.0
+
+
+def test_e3_patterns_are_ifrs18_specific_in_v0_1_3() -> None:
+    assert (
+        item_score_for_text(
+            "E3",
+            "The Group continued to assess the impact of the application of IFRS 18.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "IFRS 18 is discussed and management is analysing the potential impacts of this new standard on financial statements.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "IFRS 18 is discussed and management completed a preliminary assessment of the impacts associated with adopting the new standard.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The environmental impact assessment includes implementation of measures.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The sustainability due diligence assessment process and implementation remain ongoing.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The maturity assessment and implementation audit were completed.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The financial statement audit risk assessment was updated.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The impairment assessment in the financial statements was reviewed.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "The risk assessment booked in the financial statements was updated.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_b2_patterns_require_local_apm_context_in_v0_1_3() -> None:
+    assert (
+        item_score_for_text(
+            "B2",
+            "Alternative Performance Measures are used by management to assess operating performance.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B2",
+            "Alternative Performance Measures are disclosed. Assumptions used by management in the Group medium-term business plan and climate scenario analysis are described.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_b7_patterns_require_reconciling_item_context_in_v0_1_3() -> None:
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures note: non-controlling interest effect of reconciling items in adjusted net result.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures are disclosed. Non-controlling interests are presented in equity.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures are disclosed. Other comprehensive income attributable to non-controlling interests is presented.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures are disclosed. Dividends paid to non-controlling interests are shown.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures are disclosed. Profit attributable to non-controlling interests is disclosed.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_e4_patterns_capture_ifrs18_qualitative_transition_areas_in_v0_1_3() -> None:
+    assert (
+        item_score_for_text(
+            "E4",
+            "IFRS 18 lays down new requirements for the presentation of the income statement, management-defined performance measures, aggregation and disaggregation.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E4",
+            "Under IFRS 18, the structure of the income statement and the definition of management-defined performance measures will change.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E4",
+            "IFRS 18 affects the aggregation and disaggregation of financial information.",
+            LATEST_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E4",
+            "The presentation of the income statement and the disaggregation of financial information are discussed.",
+            LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
 
 
 def test_conditional_applicability() -> None:
