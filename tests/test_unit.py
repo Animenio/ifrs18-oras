@@ -236,10 +236,26 @@ def test_e3_patterns_are_ifrs18_specific_in_v0_1_2() -> None:
     assert (
         item_score_for_text(
             "E3",
-            "Management is analysing the potential impacts of this new standard on the presentation of the financial statements.",
+            "IFRS 18 is discussed and management is analysing the potential impacts of this new standard on the financial statements.",
             NEW_CODEBOOK,
         )
         == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "Management is analysing the potential impacts of this new standard on sustainability reporting.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "E3",
+            "Management is analysing the potential impacts of this new standard under another standard update.",
+            NEW_CODEBOOK,
+        )
+        == 0.0
     )
     assert (
         item_score_for_text(
