@@ -16,6 +16,7 @@ CODEBOOK = Path("config/codebook_v0.1.1.json")
 OLD_CODEBOOK = Path("config/codebook_v0.1.0.json")
 NEW_CODEBOOK = Path("config/codebook_v0.1.2.json")
 LATEST_CODEBOOK = Path("config/codebook_v0.1.3.json")
+NEXT_CODEBOOK = Path("config/codebook_v0.1.4.json")
 
 
 def test_text_normalisation() -> None:
@@ -119,6 +120,12 @@ def test_revised_codebook_v0_1_2_validates() -> None:
 def test_revised_codebook_v0_1_3_validates() -> None:
     codebook, digest = load_codebook(LATEST_CODEBOOK)
     assert codebook.version == "0.1.3-provisional"
+    assert len(digest) == 64
+
+
+def test_revised_codebook_v0_1_4_validates() -> None:
+    codebook, digest = load_codebook(NEXT_CODEBOOK)
+    assert codebook.version == "0.1.4-provisional"
     assert len(digest) == 64
 
 
@@ -521,6 +528,76 @@ def test_e4_patterns_capture_ifrs18_qualitative_transition_areas_in_v0_1_3() -> 
             "E4",
             "The presentation of the income statement and the disaggregation of financial information are discussed.",
             LATEST_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_b2_airbus_style_management_use_patterns_in_v0_1_4() -> None:
+    assert (
+        item_score_for_text(
+            "B2",
+            "The Company uses these non-GAAP financial measures to assess its consolidated financial and operating performance.",
+            NEXT_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B2",
+            "These non-GAAP financial measures enhance management's ability to make decisions with respect to resource allocation and whether the Company is meeting its financial goals.",
+            NEXT_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B2",
+            "Alternative Performance Measures are disclosed. Assumptions used by management in the Group medium-term business plan and climate scenario analysis are described.",
+            NEXT_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B2",
+            "Management used the scenario analysis to evaluate resilience under different climate pathways.",
+            NEXT_CODEBOOK,
+        )
+        is None
+    )
+
+
+def test_b3_airbus_style_adjusted_measure_definitions_in_v0_1_4() -> None:
+    assert (
+        item_score_for_text(
+            "B3",
+            "EBIT Adjusted is an alternative performance measure and key indicator capturing the underlying business margin by excluding material charges or profits.",
+            NEXT_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B3",
+            "Adjusted EBIT is a non-GAAP financial measure defined as EBIT excluding material charges and foreign exchange impacts.",
+            NEXT_CODEBOOK,
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B3",
+            "Alternative Performance Measures are discussed. The sustainability dashboard is capturing biodiversity trends while excluding immaterial field observations.",
+            NEXT_CODEBOOK,
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B3",
+            "Non-GAAP financial measures are mentioned. The operating narrative discusses excluding one-off disruptions from the project timetable.",
+            NEXT_CODEBOOK,
         )
         == 0.0
     )
