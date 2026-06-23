@@ -13,7 +13,7 @@ test:
 	pytest -q
 
 validate-codebook:
-	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.1.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.5.json
 
 demo:
 	python -m ifrs18_oras demo --output-dir outputs/demo

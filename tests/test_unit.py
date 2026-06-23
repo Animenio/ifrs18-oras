@@ -12,7 +12,8 @@ from ifrs18_oras.hashing import sha256_file, sha256_text
 from ifrs18_oras.models import PageText
 from ifrs18_oras.scoring import is_applicable, score_company
 
-CODEBOOK = Path("config/codebook_v0.1.1.json")
+CODEBOOK = Path("config/codebook_v0.1.5.json")
+BASELINE_CODEBOOK = Path("config/codebook_v0.1.1.json")
 OLD_CODEBOOK = Path("config/codebook_v0.1.0.json")
 NEW_CODEBOOK = Path("config/codebook_v0.1.2.json")
 LATEST_CODEBOOK = Path("config/codebook_v0.1.3.json")
@@ -93,14 +94,14 @@ def test_duplicate_item_ids(tmp_path: Path) -> None:
 
 def test_status_validation(tmp_path: Path) -> None:
     path = write_mutated_codebook(tmp_path, lambda data: data.__setitem__("status", "final"))
-    with pytest.raises(ValueError, match="status"):
+    with pytest.raises(ValueError, match="status must be one of"):
         load_codebook(path)
 
 
 def test_codebook_validation_and_deterministic_hash() -> None:
     codebook, digest_one = load_codebook(CODEBOOK)
     _, digest_two = load_codebook(CODEBOOK)
-    assert codebook.version == "0.1.1-provisional"
+    assert codebook.version == "0.1.5-validation-calibrated"
     assert digest_one == digest_two
     assert len(digest_one) == 64
 
@@ -108,6 +109,12 @@ def test_codebook_validation_and_deterministic_hash() -> None:
 def test_historical_codebook_v0_1_0_still_validates() -> None:
     codebook, digest = load_codebook(OLD_CODEBOOK)
     assert codebook.version == "0.1.0-provisional"
+    assert len(digest) == 64
+
+
+def test_historical_codebook_v0_1_1_still_validates() -> None:
+    codebook, digest = load_codebook(BASELINE_CODEBOOK)
+    assert codebook.version == "0.1.1-provisional"
     assert len(digest) == 64
 
 
@@ -598,6 +605,170 @@ def test_b3_airbus_style_adjusted_measure_definitions_in_v0_1_4() -> None:
             "B3",
             "Non-GAAP financial measures are mentioned. The operating narrative discusses excluding one-off disruptions from the project timetable.",
             NEXT_CODEBOOK,
+        )
+        == 0.0
+    )
+
+
+def test_v0_1_5_e3_e4_e5_patterns_and_guardrails() -> None:
+    assert (
+        item_score_for_text(
+            "E3",
+            "IFRS 18 is effective for annual periods beginning on or after 1 January 2027 and the potential impacts are being analysed.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E4",
+            "IFRS 18 lays down new requirements for the presentation of the income statement, management-defined performance measures, aggregation and disaggregation.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E4",
+            "IFRS 18 will affect the operating, investing and financing categories and the definition of operating income.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E5",
+            "IFRS 18 is expected to have no material impact on recognition and measurement but broader disclosure effects.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E5",
+            "The ESRS programme is expected to have broader effects on sustainability reporting and value-chain disclosures.",
+        )
+        == 0.0
+    )
+
+
+def test_v0_1_5_b2_b4_b5_b6_b7_b8_patterns_and_guardrails() -> None:
+    assert (
+        item_score_for_text(
+            "B2",
+            "Alternative Performance Measures are regularly considered by management for monitoring and comparison of financial and operating performance.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B2",
+            "Adjusted EBIT and free cash flow are used by management to make financial and planning decisions and to identify trends.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B4",
+            "The consolidated income statement and adjusted income statement are presented together with a reconciliation from EBIT to adjusted EBIT.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B5",
+            "The adjusted income statement disaggregates reconciling items between purchase price allocation, transaction costs, impairment and fair-value changes.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B6",
+            "Alternative Performance Measures note: adjusted income statement reconciliation includes an income tax row for reconciling items.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures note: adjusted income statement reconciliation includes a non-controlling interest row for reconciling items.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B7",
+            "Alternative Performance Measures are disclosed. Profit attributable to non-controlling interests is shown in the income statement.",
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "B8",
+            "The definition of the alternative performance measure changed during the year and the previous comparative information was restated.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "B8",
+            "Alternative Performance Measures are presented with comparative information for the prior year.",
+        )
+        == 0.0
+    )
+
+
+def test_v0_1_5_a3_c3_c10_c11_guardrails() -> None:
+    assert (
+        item_score_for_text(
+            "A3",
+            "The consolidated statement of profit or loss presents the operating category, investing category and financing category.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "A3",
+            "The statement of cash flows presents operating, investing and financing activities.",
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "A3",
+            "IFRS 18 will introduce operating, investing and financing categories in the income statement from 2027.",
+        )
+        == 0.0
+    )
+    assert item_score_for_text("C3", "The Group presents expenses by function.") == 1.0
+    assert (
+        item_score_for_text(
+            "C3",
+            "Expenses are classified by nature and include raw materials and consumables, staff costs and other operating expenses.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "C10",
+            "The Group presents expenses by function. Inventory write-downs amounted to 12 in the current period.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "C10",
+            "The Group presents expenses by function. Inventory is measured at the lower of cost and net realisable value and write-downs are recognised when necessary.",
+        )
+        == 0.0
+    )
+    assert (
+        item_score_for_text(
+            "C11",
+            "Revenue breakdown by segment and geography is disclosed together with financial income detail.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "C11",
+            "ESRS requires material disaggregation of sustainability matters across the value chain.",
         )
         == 0.0
     )

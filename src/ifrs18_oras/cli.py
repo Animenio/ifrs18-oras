@@ -13,7 +13,7 @@ from ifrs18_oras.reporting import write_outputs
 from ifrs18_oras.scoring import score_input
 from ifrs18_oras.validation import validate_subsample
 
-DEFAULT_CODEBOOK = Path("config/codebook_v0.1.1.json")
+DEFAULT_CODEBOOK = Path("config/codebook_v0.1.5.json")
 
 
 def _pymupdf() -> Any:
@@ -66,22 +66,23 @@ def demo_pages() -> list[str]:
     return [
         "FICTIONAL SYNTHETIC REPORTING PACKAGE - NOT A REAL COMPANY REPORT\n"
         "Aero Demo S.p.A. consolidated statement of profit or loss. Operating profit was presented. "
-        "Profit before financing and income taxes is disclosed. Operating category, investing category "
-        "and financing category are traceable. Income tax expense and finance costs are separately shown. "
+        "Profit before financing and income taxes is disclosed. In the consolidated statement of profit or loss, "
+        "operating category, investing category and financing category are traceable. Income tax expense and finance costs are separately shown. "
         "Discontinued operations are discussed. The result of equity method associates and joint ventures is separately observable.\n"
         "The group presents expenses by function. Cost of sales is shown and notes explain the nature of expenses "
         "included in function line items, including employee benefits, depreciation, amortisation, impairment losses, "
-        "and inventory write-downs. Note 7 cross-references line items. Other expenses include litigation settlement and restructuring costs.",
+        "and inventory write-downs. Employee benefits amounted to 120. Revenue see Note 7 and cost of sales see Note 8. Other expenses include litigation settlement and restructuring costs. "
+        "Revenue breakdown by segment and geography is disclosed together with financial income detail.",
         "Alternative performance measure section: adjusted EBIT is used by management because it provides management's view "
-        "of recurring operating performance. The calculation method starts from operating profit and adds restructuring costs. "
+        "of recurring operating performance. Adjusted EBIT is defined as operating profit excluding restructuring costs. The calculation method starts from operating profit and adds restructuring costs. "
         "A reconciliation to IFRS operating profit is provided. Reconciling items are disaggregated between restructuring costs "
-        "and impairment losses. Tax effect of reconciling items and non-controlling interest effect are disclosed. "
-        "The company explains changes in measures and comparative information.\n"
+        "and impairment losses. The non-controlling interest effect of reconciling items in adjusted net result is disclosed. Tax effect of reconciling items is disclosed. "
+        "The definition of the alternative performance measure changed during the year and comparative information was restated.\n"
         "Rendiconto finanziario: interest received classified as investing, interest paid classified as financing, "
         "dividends received classified as investing, dividends paid classified as financing. Indirect cash-flow reconciliation starts from operating profit.",
         "IFRS 18 transition transparency: IFRS 18 is mentioned with planned adoption for annual periods beginning on 1 January 2027. "
-        "An impact assessment and implementation project are underway. Affected reporting areas include subtotals, note disclosures, "
-        "aggregation and disaggregation, and management-defined performance measure disclosures. Expected qualitative effects are disclosed.",
+        "The group is preparing for implementation and the potential impacts are being analysed. IFRS 18 affects the presentation of the income statement, "
+        "aggregation and disaggregation, and management-defined performance measure disclosures. IFRS 18 is expected to have no material impact on recognition and measurement but broader disclosure effects are disclosed.",
     ]
 
 
@@ -103,7 +104,7 @@ def generate_fictional_fixture_input(root: Path) -> None:
         root / "Fictional_No_MPM_Candidate" / "annual_report.pdf",
         [
             "FICTIONAL STANDARD METRICS REPORT - NOT A REAL COMPANY REPORT\n"
-            "Operating profit is presented. Profit before financing and income taxes is disclosed. Operating category, investing category and financing category are traceable. "
+            "Operating profit is presented. Profit before financing and income taxes is disclosed. In the statement of profit or loss, operating category, investing category and financing category are traceable. "
             "Income tax expense and finance costs are separately shown. The statement includes expenses by nature. IFRS 18 planned adoption is disclosed with an impact assessment.",
             "Aggregation and disaggregation are discussed in the notes. Other income includes insurance proceeds. No non-standard performance terminology is used.",
         ],
