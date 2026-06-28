@@ -8,6 +8,11 @@ from typing import Any
 from ifrs18_oras.hashing import sha256_file
 from ifrs18_oras.models import Codebook, DimensionConfig, ItemConfig, PatternSet, TriggerConfig
 
+ALLOWED_CODEBOOK_STATUSES = {
+    "provisional_pending_accounting_review",
+    "provisional_validation_calibrated_pending_external_accounting_review",
+}
+
 
 def load_codebook(path: Path) -> tuple[Codebook, str]:
     if not path.exists():
@@ -44,9 +49,10 @@ def build_codebook(raw: dict[str, Any]) -> Codebook:
 
 
 def validate_codebook_schema(codebook: Codebook) -> None:
-    if codebook.status != "provisional_pending_accounting_review":
+    if codebook.status not in ALLOWED_CODEBOOK_STATUSES:
         raise ValueError(
-            "Invalid codebook schema: status must be provisional_pending_accounting_review"
+            "Invalid codebook schema: status must be one of "
+            + ", ".join(sorted(ALLOWED_CODEBOOK_STATUSES))
         )
     dim_ids = [dimension.id for dimension in codebook.dimensions]
     if len(dim_ids) != len(set(dim_ids)):

@@ -13,7 +13,8 @@ from ifrs18_oras.cli import generate_demo_pdf, generate_fictional_fixture_input
 from ifrs18_oras.hashing import sha256_file
 from ifrs18_oras.reporting import package_versions
 
-CODEBOOK = "config/codebook_v0.1.1.json"
+CODEBOOK = "config/codebook_v0.1.5.json"
+BASELINE_CODEBOOK = "config/codebook_v0.1.1.json"
 OLD_CODEBOOK = "config/codebook_v0.1.0.json"
 NEW_CODEBOOK = "config/codebook_v0.1.2.json"
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +46,7 @@ def test_package_versions_has_no_empty_package_key() -> None:
     assert "" not in versions
 
 
-def test_default_cli_codebook_points_to_v0_1_1() -> None:
+def test_default_cli_codebook_points_to_v0_1_5() -> None:
     from ifrs18_oras.cli import DEFAULT_CODEBOOK
 
     assert DEFAULT_CODEBOOK.as_posix() == CODEBOOK
@@ -65,6 +66,12 @@ def test_historical_codebook_cli_validation(tmp_path: Path) -> None:
 
 def test_current_codebook_cli_validation() -> None:
     result = run_cli("validate-codebook", "--codebook", CODEBOOK)
+    assert result.returncode == 0, result.stderr
+    assert "version=0.1.5-validation-calibrated" in result.stdout
+
+
+def test_baseline_codebook_cli_validation() -> None:
+    result = run_cli("validate-codebook", "--codebook", BASELINE_CODEBOOK)
     assert result.returncode == 0, result.stderr
     assert "version=0.1.1-provisional" in result.stdout
 
@@ -164,12 +171,12 @@ def test_four_fictional_fixture_golden_outputs(tmp_path: Path) -> None:
             "documents_scored": "1",
         },
         "Fictional_Partial_Alignment": {
-            "ifrs18_oras_0_100": "35.2408",
-            "dimension_B_mpm_candidate": "38.0",
+            "ifrs18_oras_0_100": "28.6337",
+            "dimension_B_mpm_candidate": "12.0",
             "documents_scored": "1",
         },
         "Fictional_No_MPM_Candidate": {
-            "ifrs18_oras_0_100": "80.7778",
+            "ifrs18_oras_0_100": "64.2222",
             "dimension_B_mpm_candidate": "N/A",
             "documents_scored": "1",
         },
@@ -381,7 +388,7 @@ def test_mixed_pdf_and_xhtml_package_scores_both_formats(tmp_path: Path) -> None
     company = tmp_path / "raw" / "MixedFormats"
     generate_demo_pdf(company / "readable.pdf")
     (company / "annual_report.html").write_text(
-        "<html><body><p>Operating category, investing category and financing category are traceable.</p></body></html>",
+        "<html><body><p>In the consolidated statement of profit or loss, operating category, investing category and financing category are traceable.</p></body></html>",
         encoding="utf-8",
     )
     out = tmp_path / "out"
