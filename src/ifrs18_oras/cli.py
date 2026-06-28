@@ -13,7 +13,7 @@ from ifrs18_oras.reporting import write_outputs
 from ifrs18_oras.scoring import score_input
 from ifrs18_oras.validation import validate_subsample
 
-DEFAULT_CODEBOOK = Path("config/codebook_v0.1.5.json")
+DEFAULT_CODEBOOK = Path("config/codebook_v0.1.6.json")
 
 
 def _pymupdf() -> Any:
