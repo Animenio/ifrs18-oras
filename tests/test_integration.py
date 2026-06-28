@@ -53,6 +53,13 @@ def test_default_cli_codebook_points_to_v0_1_6() -> None:
     assert DEFAULT_CODEBOOK.as_posix() == CODEBOOK
 
 
+def test_makefile_validates_current_and_historical_codebooks() -> None:
+    makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+    assert "config/codebook_v0.1.6.json" in makefile
+    for version in ["0.1.0", "0.1.1", "0.1.2", "0.1.3", "0.1.4", "0.1.5"]:
+        assert f"config/codebook_v{version}.json" in makefile
+
+
 def test_extraction_has_no_stdlib_html_fallback_imports() -> None:
     source = (SRC_ROOT / "ifrs18_oras" / "extraction.py").read_text(encoding="utf-8")
     assert "import importlib.util" not in source
