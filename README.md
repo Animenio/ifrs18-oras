@@ -4,7 +4,7 @@ IFRS18-ORAS is a deterministic Python research pipeline for calculating the **IF
 
 ## Academic boundary
 
-The indicator is not a legal IFRS 18 compliance opinion, audit conclusion, organisational-readiness measure, proof of full IFRS 18 implementation, or proof that a detected alternative performance measure is legally an IFRS 18 management-defined performance measure. Codebook v0.1.5 is `provisional_validation_calibrated_pending_external_accounting_review` and includes a narrow post-merge hotfix for the PR #11 A3 and E5 review comments; it must still undergo external accounting review before empirical deployment. Regex screening can produce false positives and false negatives; demo fixtures validate software behaviour, not accounting validity.
+The indicator is not a legal IFRS 18 compliance opinion, audit conclusion, organisational-readiness measure, proof of full IFRS 18 implementation, or proof that a detected alternative performance measure is legally an IFRS 18 management-defined performance measure. Codebook v0.1.6 is `validation_calibrated_pending_external_accounting_review` and serves as the current final baseline, while v0.1.5 is preserved for historical reproducibility after the score-affecting A3 and E5 hotfixes were versioned forward. Regex screening can produce false positives and false negatives; demo fixtures validate software behaviour, not accounting validity.
 
 ## Repository structure
 
@@ -29,10 +29,10 @@ python -m pip install -e ".[dev]"
 ## CLI examples
 
 ```bash
-python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.5.json
-python -m ifrs18_oras describe-codebook --codebook config/codebook_v0.1.5.json
+python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.6.json
+python -m ifrs18_oras describe-codebook --codebook config/codebook_v0.1.6.json
 python -m ifrs18_oras demo --output-dir outputs/demo
-python -m ifrs18_oras score --input-dir data/raw --output-dir outputs/run_001 --codebook config/codebook_v0.1.5.json
+python -m ifrs18_oras score --input-dir data/raw --output-dir outputs/run_001 --codebook config/codebook_v0.1.6.json
 python -m ifrs18_oras validate-subsample --automatic-item-scores outputs/run_001/item_scores.csv --manual-coding validation/manual_item_scores.csv --output-dir outputs/validation_run_001
 ```
 
@@ -58,7 +58,7 @@ Each run writes `company_scores.csv`, `company_scores.json`, `dimension_scores.c
 
 ## Reproducibility protocol
 
-Record the data cut-off, archive input document hashes, run from a clean clone, preserve `run_manifest.json`, and avoid comparing scores from different codebook versions without a comparability warning. The default codebook is `config/codebook_v0.1.5.json`; historical `config/codebook_v0.1.0.json` through `config/codebook_v0.1.4.json` remain available to reproduce earlier pilot runs. Codebook v0.1.5 incorporates validation-calibrated rule refinements for IFRS 18 transition disclosures, MPM/APM evidence, income-statement architecture guardrails, and disaggregation signals, plus a narrow post-merge hotfix for the PR #11 A3 and E5 review comments, while remaining a deterministic observable-alignment screen. The codebook is JSON because it is human-readable, versionable, and dependency-light.
+Record the data cut-off, archive input document hashes, run from a clean clone, preserve `run_manifest.json`, and avoid comparing scores from different codebook versions without a comparability warning. The default codebook is `config/codebook_v0.1.6.json`; historical `config/codebook_v0.1.0.json` through `config/codebook_v0.1.5.json` remain available to reproduce earlier pilot runs. Codebook v0.1.6 preserves the score-affecting A3/E5 hotfixes as a new validation-calibrated baseline while keeping v0.1.5 reproducible as the historical post-PR-12 version. The codebook is JSON because it is human-readable, versionable, and dependency-light.
 
 ## Limitations
 

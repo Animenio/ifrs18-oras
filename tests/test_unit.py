@@ -12,7 +12,8 @@ from ifrs18_oras.hashing import sha256_file, sha256_text
 from ifrs18_oras.models import PageText
 from ifrs18_oras.scoring import is_applicable, score_company
 
-CODEBOOK = Path("config/codebook_v0.1.5.json")
+CODEBOOK = Path("config/codebook_v0.1.6.json")
+PREVIOUS_CODEBOOK = Path("config/codebook_v0.1.5.json")
 BASELINE_CODEBOOK = Path("config/codebook_v0.1.1.json")
 OLD_CODEBOOK = Path("config/codebook_v0.1.0.json")
 NEW_CODEBOOK = Path("config/codebook_v0.1.2.json")
@@ -101,7 +102,7 @@ def test_status_validation(tmp_path: Path) -> None:
 def test_codebook_validation_and_deterministic_hash() -> None:
     codebook, digest_one = load_codebook(CODEBOOK)
     _, digest_two = load_codebook(CODEBOOK)
-    assert codebook.version == "0.1.5-validation-calibrated"
+    assert codebook.version == "0.1.6-validation-calibrated"
     assert digest_one == digest_two
     assert len(digest_one) == 64
 
@@ -133,6 +134,12 @@ def test_revised_codebook_v0_1_3_validates() -> None:
 def test_revised_codebook_v0_1_4_validates() -> None:
     codebook, digest = load_codebook(NEXT_CODEBOOK)
     assert codebook.version == "0.1.4-provisional"
+    assert len(digest) == 64
+
+
+def test_revised_codebook_v0_1_5_validates() -> None:
+    codebook, digest = load_codebook(PREVIOUS_CODEBOOK)
+    assert codebook.version == "0.1.5-validation-calibrated"
     assert len(digest) == 64
 
 
@@ -610,7 +617,7 @@ def test_b3_airbus_style_adjusted_measure_definitions_in_v0_1_4() -> None:
     )
 
 
-def test_v0_1_5_e3_e4_e5_patterns_and_guardrails() -> None:
+def test_v0_1_6_e3_e4_e5_patterns_and_guardrails() -> None:
     assert (
         item_score_for_text(
             "E3",
@@ -629,6 +636,27 @@ def test_v0_1_5_e3_e4_e5_patterns_and_guardrails() -> None:
         item_score_for_text(
             "E4",
             "IFRS 18 will affect the operating, investing and financing categories and the definition of operating income.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E5",
+            "IFRS 18 has an expected material impact.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E5",
+            "IFRS 18 is expected to have a material impact.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "E5",
+            "The expected material impact of IFRS 18 is being assessed.",
         )
         == 1.0
     )
@@ -656,7 +684,7 @@ def test_v0_1_5_e3_e4_e5_patterns_and_guardrails() -> None:
     )
 
 
-def test_v0_1_5_b2_b4_b5_b6_b7_b8_patterns_and_guardrails() -> None:
+def test_v0_1_6_b2_b4_b5_b6_b7_b8_patterns_and_guardrails() -> None:
     assert (
         item_score_for_text(
             "B2",
@@ -722,7 +750,7 @@ def test_v0_1_5_b2_b4_b5_b6_b7_b8_patterns_and_guardrails() -> None:
     )
 
 
-def test_v0_1_5_a3_c3_c10_c11_guardrails() -> None:
+def test_v0_1_6_a3_c3_c10_c11_guardrails() -> None:
     assert (
         item_score_for_text(
             "A3",
