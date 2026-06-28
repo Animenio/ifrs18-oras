@@ -2,7 +2,7 @@
   "name": "IFRS18-ORAS provisional codebook",
   "version": "0.1.5-validation-calibrated",
   "status": "provisional_validation_calibrated_pending_external_accounting_review",
-  "methodology_note": "Validation-calibrated codebook for observable documentary alignment screening only. It is not an IFRS 18 compliance opinion, audit conclusion, organisational readiness measure, proof of full IFRS 18 implementation, or proof that an automatically detected alternative performance measure is legally an IFRS 18 management-defined performance measure. External accounting review remains required before empirical deployment.\n",
+  "methodology_note": "Validation-calibrated codebook for observable documentary alignment screening only. It is not an IFRS 18 compliance opinion, audit conclusion, organisational readiness measure, proof of full IFRS 18 implementation, or proof that an automatically detected alternative performance measure is legally an IFRS 18 management-defined performance measure. This file also includes a narrow post-merge hotfix addressing PR #11 review comments on A3 collective category wording and E5 IFRS 18 context anchoring. External accounting review remains required before empirical deployment.\n",
   "triggers": {
     "mpm_candidate": [
       "\\badjusted\\s+EBIT(?:DA)?\\b",
@@ -104,7 +104,8 @@
           "patterns": {
             "strong": [
               "\\b(?:consolidated\\s+)?(?:statement\\s+of\\s+(?:profit\\s+or\\s+loss|income)|income\\s+statement)\\b[\\s\\S]{0,220}\\boperating\\s+category\\b[\\s\\S]{0,120}\\binvesting\\s+category\\b[\\s\\S]{0,120}\\bfinancing\\s+category\\b",
-              "\\boperating\\s+category\\b[\\s\\S]{0,120}\\binvesting\\s+category\\b[\\s\\S]{0,120}\\bfinancing\\s+category\\b[\\s\\S]{0,220}\\b(?:statement\\s+of\\s+(?:profit\\s+or\\s+loss|income)|income\\s+statement)\\b"
+              "\\boperating\\s+category\\b[\\s\\S]{0,120}\\binvesting\\s+category\\b[\\s\\S]{0,120}\\bfinancing\\s+category\\b[\\s\\S]{0,220}\\b(?:statement\\s+of\\s+(?:profit\\s+or\\s+loss|income)|income\\s+statement)\\b",
+              "\\b(?:consolidated\\s+)?(?:statement\\s+of\\s+(?:profit\\s+or\\s+loss|income)|income\\s+statement)\\b[\\s\\S]{0,220}\\boperating\\s*,?\\s*investing\\s*,?\\s*and\\s*financing\\s+categories\\b"
             ],
             "weak": [
               "\\b(?:consolidated\\s+)?(?:statement\\s+of\\s+(?:profit\\s+or\\s+loss|income)|income\\s+statement)\\b[\\s\\S]{0,220}\\b(?:operating|investing|financing)\\s+category\\b[\\s\\S]{0,160}\\b(?:operating|investing|financing)\\s+category\\b"
@@ -669,13 +670,20 @@
           "applicability_rule": "always",
           "patterns": {
             "strong": [
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\bexpected\\s+material\\s+impact\\b",
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\bwill\\s+not\\s+have\\s+(?:a\\s+)?material\\s+impact\\b",
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\bno\\s+material\\s+impact\\b",
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\b(?:broader\\s+disclosure|broader\\s+information)\\b",
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\bno\\s+impact\\s+on\\s+recognition\\s+and\\s+measurement\\b",
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\b(?:presentation|classification)\\b[\\s\\S]{0,100}\\beffects?\\b",
-              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements|new\\s+standard)\\b[\\s\\S]{0,180}\\bexpected\\s+(?:qualitative|quantitative)\\s+effects?\\b"
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\b(?:the\\s+)?new\\s+standard\\b[\\s\\S]{0,120}\\bexpected\\s+material\\s+impact\\b",
+              "\\bexpected\\s+material\\s+impact\\b[\\s\\S]{0,180}\\b(?:the\\s+)?new\\s+standard\\b[\\s\\S]{0,120}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\bwill\\s+not\\s+have\\s+(?:a\\s+)?material\\s+impact\\b",
+              "\\bwill\\s+not\\s+have\\s+(?:a\\s+)?material\\s+impact\\b[\\s\\S]{0,180}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\bno\\s+material\\s+impact\\b",
+              "\\bno\\s+material\\s+impact\\b[\\s\\S]{0,180}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\b(?:broader\\s+disclosure|broader\\s+information)\\b",
+              "\\b(?:broader\\s+disclosure|broader\\s+information)\\b[\\s\\S]{0,180}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\bno\\s+impact\\s+on\\s+recognition\\s+and\\s+measurement\\b",
+              "\\bno\\s+impact\\s+on\\s+recognition\\s+and\\s+measurement\\b[\\s\\S]{0,180}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\b(?:presentation|classification)\\b[\\s\\S]{0,100}\\beffects?\\b",
+              "\\b(?:presentation|classification)\\b[\\s\\S]{0,100}\\beffects?\\b[\\s\\S]{0,180}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b",
+              "\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b[\\s\\S]{0,180}\\bexpected\\s+(?:qualitative|quantitative)\\s+effects?\\b",
+              "\\bexpected\\s+(?:qualitative|quantitative)\\s+effects?\\b[\\s\\S]{0,180}\\b(?:IFRS\\s*18|Presentation\\s+and\\s+Disclosure\\s+in\\s+Financial\\s+Statements)\\b"
             ],
             "weak": []
           }

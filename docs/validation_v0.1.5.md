@@ -1,6 +1,6 @@
 # Validation-Calibrated Notes For v0.1.5
 
-Codebook `config/codebook_v0.1.5.json` incorporates manual-validation findings from the 10-company European aerospace and defence pilot as general deterministic rule refinements. The calibration is intentionally conservative: it tightens known false-positive paths, restores a narrow set of false negatives, and preserves the observable-alignment boundary of IFRS18-ORAS.
+Codebook `config/codebook_v0.1.5.json` incorporates manual-validation findings from the 10-company European aerospace and defence pilot as general deterministic rule refinements. The calibration is intentionally conservative: it tightens known false-positive paths, restores a narrow set of false negatives, and preserves the observable-alignment boundary of IFRS18-ORAS. After PR #11 merged, the same file received a narrow post-merge hotfix for the unresolved A3 and E5 review comments without changing the codebook identifier.
 
 The calibration does not hardcode company-specific scores. It updates reusable pattern logic for IFRS 18 transition transparency, MPM/APM evidence, profit-or-loss architecture guardrails, and disaggregation evidence so that a fresh automatic pilot remains transparent, reproducible, and auditable.
 

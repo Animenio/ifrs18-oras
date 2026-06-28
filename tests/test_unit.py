@@ -642,6 +642,14 @@ def test_v0_1_5_e3_e4_e5_patterns_and_guardrails() -> None:
     assert (
         item_score_for_text(
             "E5",
+            "IFRS 18 is discussed and the new standard will not have a material impact on recognition and measurement.",
+        )
+        == 1.0
+    )
+    assert item_score_for_text("E5", "The new standard will not have a material impact.") == 0.0
+    assert (
+        item_score_for_text(
+            "E5",
             "The ESRS programme is expected to have broader effects on sustainability reporting and value-chain disclosures.",
         )
         == 0.0
@@ -725,6 +733,13 @@ def test_v0_1_5_a3_c3_c10_c11_guardrails() -> None:
     assert (
         item_score_for_text(
             "A3",
+            "The statement of profit or loss presents operating, investing and financing categories.",
+        )
+        == 1.0
+    )
+    assert (
+        item_score_for_text(
+            "A3",
             "The statement of cash flows presents operating, investing and financing activities.",
         )
         == 0.0
@@ -736,6 +751,7 @@ def test_v0_1_5_a3_c3_c10_c11_guardrails() -> None:
         )
         == 0.0
     )
+    assert item_score_for_text("A3", "Operating, investing and financing categories are being reviewed.") == 0.0
     assert item_score_for_text("C3", "The Group presents expenses by function.") == 1.0
     assert (
         item_score_for_text(
