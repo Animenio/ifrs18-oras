@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.6 validation-calibrated baseline - 2026-06-28
+
+- Added `config/codebook_v0.1.6.json` as the current validation-calibrated baseline before the N150 rerun and baseline freeze.
+- Preserved `config/codebook_v0.1.5.json` historically for reproducibility while versioning forward the score-affecting A3 and E5 hotfixes from the post-PR-12 state.
+- Restored direct E5 IFRS 18 expected-impact matches, including wording such as `IFRS 18 has an expected material impact` and `IFRS 18 is expected to have a material impact`, while continuing to reject generic unanchored `new standard` material-impact text.
+- Retained the A3 collective-category wording fix for `statement of profit or loss` and `income statement` contexts covering `operating, investing and financing categories`.
+- Comparability warning: scores generated with v0.1.5 and v0.1.6 may differ and should not be mixed, pooled, or compared without explicit codebook-version disclosure.
+
 ## 0.1.0 - 2026-06-03
 
 - Initial IFRS18-ORAS software release.

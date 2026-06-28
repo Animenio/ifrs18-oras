@@ -13,12 +13,17 @@ test:
 	pytest -q
 
 validate-codebook:
-	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.5.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.6.json
 
 demo:
 	python -m ifrs18_oras demo --output-dir outputs/demo
 
 validate-codebook-historical:
 	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.0.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.1.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.2.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.3.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.4.json
+	python -m ifrs18_oras validate-codebook --codebook config/codebook_v0.1.5.json
 
 verify: install lint format-check test validate-codebook validate-codebook-historical demo
